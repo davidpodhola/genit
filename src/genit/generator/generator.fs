@@ -1010,9 +1010,9 @@ let generate (site : Site) =
   let serverKey = sprintf """let serverKey = %A""" (Suave.Utils.Crypto.generateKey Suave.Http.HttpRuntime.ServerKeyLength)
   let generated_security_result = generated_security_template serverKey
 
-  let generated_sql_createdb_result = sql.createTemplate site.AsDatabase
-  let generated_sql_initialSetup_result = sql.initialSetupTemplate site.AsDatabase
-  let generated_sql_createTables_result = sql.createTables (sql.createTableTemplates site) (sql.grantPrivileges site)
+  let generated_sql_createdb_result = sql.createTemplate site.AsDatabase sql.Engine.PostgreSQL
+  let generated_sql_initialSetup_result = sql.initialSetupTemplate site.AsDatabase sql.Engine.PostgreSQL
+  let generated_sql_createTables_result = sql.createTables (sql.createTableTemplates site sql.Engine.PostgreSQL) (sql.grantPrivileges site)
 
   write (destination "generated_html.fs") generated_html_result
   write (destination "generated_views.fs") generated_views_result

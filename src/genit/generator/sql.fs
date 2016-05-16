@@ -12,6 +12,11 @@ let createTemplate dbname engine =
   match engine with
   | PostgreSQL -> psql.createTemplate dbname
 
+
+let initialSetupTemplate (dbname : string) engine =
+  match engine with
+  | PostgreSQL -> psql.initialSetupTemplate dbname
+
 (*
 
 CREATE TABLES
