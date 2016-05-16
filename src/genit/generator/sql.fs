@@ -54,10 +54,10 @@ let createColumns (page : Page) engine =
 let createTableTemplate (dbname : string) (engine:Engine) (page : Page) =
   let columns = createColumns page engine
   sprintf """
-CREATE TABLE %s.%s(
+CREATE TABLE %s(
 %s
 );
-  """ dbname page.AsTable columns
+  """ page.AsTable columns
 
 let shouldICreateTable page =
   match page.PageMode with
