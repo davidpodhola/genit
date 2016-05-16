@@ -1012,7 +1012,7 @@ let generate (site : Site) =
 
   let generated_sql_createdb_result = sql.createTemplate site.AsDatabase sql.Engine.PostgreSQL
   let generated_sql_initialSetup_result = sql.initialSetupTemplate site.AsDatabase sql.Engine.PostgreSQL
-  let generated_sql_createTables_result = sql.createTables (sql.createTableTemplates site sql.Engine.PostgreSQL) (sql.grantPrivileges site)
+  let generated_sql_createTables_result = sql.createTables (sql.createTableTemplates site sql.Engine.PostgreSQL) (sql.grantPrivileges site sql.Engine.PostgreSQL)
 
   write (destination "generated_html.fs") generated_html_result
   write (destination "generated_views.fs") generated_views_result
