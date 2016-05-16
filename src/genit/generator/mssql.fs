@@ -1,23 +1,20 @@
-module sql
+module mssql
 
 open dsl
 open helper_general
-open psql
 
-type Engine =
-  | PostgreSQL
-  | MicrosoftSQL
+let createTemplate (dbname:string) =
+  System.String.Format("""
+use master;
+GO
+ALTER DATABASE {0} SET SINGLE_USER
+GO
+DROP DATABASE {0}
+GO
+CREATE DATABASE {0};""", dbname )
 
-let createTemplate dbname engine =
-  match engine with
-  | PostgreSQL -> psql.createTemplate dbname
-  | MicrosoftSQL -> mssql.createTemplate dbname
-
-
-let initialSetupTemplate (dbname : string) engine =
-  match engine with
-  | PostgreSQL -> psql.initialSetupTemplate dbname
-  | MicrosoftSQL -> mssql.initialSetupTemplate dbname
+let initialSetupTemplate (dbname : string) = System.String.Format("""
+""" )
 
 (*
 
@@ -25,34 +22,48 @@ CREATE TABLES
 
 *)
 
-let columnTypeTemplate field engine =
-  match engine with
-  | PostgreSQL -> psql.columnTypeTemplate field
-  | MicrosoftSQL -> mssql.columnTypeTemplate field
+let columnTypeTemplate field =
+  match field.FieldType with
+  | Id              -> "int IDENTITY (1,1)"
+  | Text            -> "nvarchar(1024)"
+  | Paragraph       -> "ntext"
+  | Number          -> "int"
+  | Decimal         -> "decimal(12, 2)"
+  | Date            -> "datetime"
+  | Phone           -> "varchar(15)"
+  | Email           -> "varchar(128)"
+  | Name            -> "varchar(128)"
+  | Password        -> "varchar(60)"
+  | ConfirmPassword -> ""
+  | Dropdown (_)    -> "smallint"
 
 //http://www.postgresql.org/docs/9.5/static/ddl-constraints.html
-let columnAttributesTemplate (field : Field) engine =
-  match engine with
-  | PostgreSQL -> psql.columnAttributesTemplate field
-  | MicrosoftSQL -> mssql.columnAttributesTemplate field
+let columnAttributesTemplate (field : Field) =
+  match field.Attribute with
+  | PK              -> "PRIMARY KEY NOT NULL"
+  | Null            -> "NULL"
+  | Required        -> "NOT NULL"
+  | Min(min)        -> sprintf "CHECK (%s > %i)" field.AsDBColumn min
+  | Max(max)        -> sprintf "CHECK (%s < %i)" field.AsDBColumn max
+  | Range(min, max) -> sprintf "CHECK (%i < %s < %i)" min field.AsDBColumn max
 
-let columnTemplate namePad typePad engine (field : Field)  =
- sprintf "%s %s %s" (rightPad namePad field.AsDBColumn) (rightPad typePad (columnTypeTemplate field engine)) (columnAttributesTemplate field engine)
+let columnTemplate namePad typePad (field : Field) =
+ sprintf "%s %s %s" (rightPad namePad field.AsDBColumn) (rightPad typePad (columnTypeTemplate field)) (columnAttributesTemplate field)
 
-let createColumns (page : Page) engine =
+let createColumns (page : Page) =
   let maxName = page.Fields |> List.map (fun field -> field.AsDBColumn.Length) |> List.max
   let maxName = if maxName > 20 then maxName else 20
-  let maxType = page.Fields |> List.map (fun field -> (columnTypeTemplate field engine).Length) |> List.max
+  let maxType = page.Fields |> List.map (fun field -> (columnTypeTemplate field).Length) |> List.max
   let maxType = if maxType > 20 then maxType else 20
 
   page.Fields
   |> List.filter (fun field -> field.FieldType <> ConfirmPassword)
-  |> List.map (columnTemplate maxName maxType engine)
+  |> List.map (columnTemplate maxName maxType)
   |> List.map (pad 1)
   |> flattenWith ","
 
-let createTableTemplate (dbname : string) (engine:Engine) (page : Page) =
-  let columns = createColumns page engine
+let createTableTemplate (dbname : string) (page : Page) =
+  let columns = createColumns page
   sprintf """
 CREATE TABLE %s.%s(
 %s
@@ -72,17 +83,16 @@ let shouldICreateTable page =
   | Search      -> true
   | Jumbotron   -> false
 
-let createTableTemplates (site : Site) (engine:Engine) =
+let createTableTemplates (site : Site) =
   site.Pages
   |> List.filter (fun page -> shouldICreateTable page)
   |> List.filter (fun page -> page.CreateTable = CreateTable)
-  |> List.map (createTableTemplate site.AsDatabase engine)
+  |> List.map (createTableTemplate site.AsDatabase)
   |> flatten
 
-let grantPrivileges (site : Site) (engine:Engine)  =
-  match engine with
-  | PostgreSQL -> psql.grantPrivileges site
-  | MicrosoftSQL -> mssql.grantPrivileges site
+let grantPrivileges (site : Site) =
+  """
+  """ 
 
 let createTables guts1 guts2 =
   sprintf """
