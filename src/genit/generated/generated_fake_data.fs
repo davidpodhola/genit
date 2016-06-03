@@ -4,46 +4,43 @@ open generated_types
 open generated_data_access
 open helper_general
 
-let fake_group () =
+let fake_order () =
+  let cityStateZip = randomItem citiesSatesZips
   {
-    GroupID = -1L 
+    OrderID = -1L 
     Name = (randomItem firstNames) + " " + (randomItem lastNames) 
+    Food = randomItems 6 words 
+    Drinks = randomItems 6 words 
+    Tip = random.Next(100) |> double 
+    Notes = randomItems 40 words 
+    DeliveryDate = System.DateTime.Now 
+    PhoneNumber = sprintf "%i-%i-%i" (random.Next(200,800)) (random.Next(200,800)) (random.Next(2000,8000)) 
+    Address = (string (random.Next(100,9999))) + " " + (randomItem streetNames) + " " + (randomItem streetNameSuffixes) 
+    City = cityStateZip.City 
+    State = cityStateZip.State 
+    Zip = cityStateZip.Zip 
+    FreeSoda = 1s 
   }
 
-let fake_many_group number =
+let fake_many_order number =
   [| 1..number |]
-  |> Array.map (fun _ -> fake_group ()) //no parallel cause of RNG
-  |> Array.Parallel.map insert_group
+  |> Array.map (fun _ -> fake_order ()) //no parallel cause of RNG
+  |> Array.Parallel.map insert_order
   |> ignore
  
  
-let fake_supplier () =
+let fake_reserveration () =
   {
-    SupplierID = -1L 
+    ReserverationID = -1L 
     Name = (randomItem firstNames) + " " + (randomItem lastNames) 
-    Address = randomItems 40 words 
-    Email = sprintf "%s@%s.com" (randomItem words) (randomItem words) 
+    Date = System.DateTime.Now 
     PhoneNumber = sprintf "%i-%i-%i" (random.Next(200,800)) (random.Next(200,800)) (random.Next(2000,8000)) 
   }
 
-let fake_many_supplier number =
+let fake_many_reserveration number =
   [| 1..number |]
-  |> Array.map (fun _ -> fake_supplier ()) //no parallel cause of RNG
-  |> Array.Parallel.map insert_supplier
-  |> ignore
- 
- 
-let fake_supplierInGroup () =
-  {
-    SupplierInGroupID = -1L 
-    Group = unbox null 
-    Supplier = unbox null 
-  }
-
-let fake_many_supplierInGroup number =
-  [| 1..number |]
-  |> Array.map (fun _ -> fake_supplierInGroup ()) //no parallel cause of RNG
-  |> Array.Parallel.map insert_supplierInGroup
+  |> Array.map (fun _ -> fake_reserveration ()) //no parallel cause of RNG
+  |> Array.Parallel.map insert_reserveration
   |> ignore
  
  

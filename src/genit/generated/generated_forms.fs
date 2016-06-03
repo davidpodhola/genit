@@ -5,53 +5,94 @@ open Suave.Form
 open generated_types
 open generated_data_access
 
-type GroupForm =
+type RegisterForm =
   {
-    GroupID : string
-    Name : string
+    UserID : string
+    FirstName : string
+    LastName : string
+    Email : string
+    Password : string
+    ConfirmPassword : string
   }
 
-let groupForm : Form<GroupForm> = Form ([],[])
+let registerForm : Form<RegisterForm> = Form ([],[])
 
-let convert_groupForm (groupForm : GroupForm) : Group =
+let convert_registerForm (registerForm : RegisterForm) : Register =
   {
-    GroupID = int64 groupForm.GroupID
-    Name = groupForm.Name
+    UserID = int64 registerForm.UserID
+    FirstName = registerForm.FirstName
+    LastName = registerForm.LastName
+    Email = registerForm.Email
+    Password = registerForm.Password
   }
   
-type SupplierForm =
+type LoginForm =
   {
-    SupplierID : string
-    Name : string
-    Address : string
+    UserID : string
     Email : string
+    Password : string
+  }
+
+let loginForm : Form<LoginForm> = Form ([],[])
+
+let convert_loginForm (loginForm : LoginForm) : Login =
+  {
+    UserID = int64 loginForm.UserID
+    Email = loginForm.Email
+    Password = loginForm.Password
+  }
+  
+type OrderForm =
+  {
+    OrderID : string
+    Name : string
+    Food : string
+    Drinks : string
+    Tip : string
+    Notes : string
+    DeliveryDate : string
+    PhoneNumber : string
+    Address : string
+    City : string
+    State : string
+    Zip : string
+    FreeSoda : string
+  }
+
+let orderForm : Form<OrderForm> = Form ([],[])
+
+let convert_orderForm (orderForm : OrderForm) : Order =
+  {
+    OrderID = int64 orderForm.OrderID
+    Name = orderForm.Name
+    Food = orderForm.Food
+    Drinks = orderForm.Drinks
+    Tip = double orderForm.Tip
+    Notes = orderForm.Notes
+    DeliveryDate = System.DateTime.Parse(orderForm.DeliveryDate)
+    PhoneNumber = orderForm.PhoneNumber
+    Address = orderForm.Address
+    City = orderForm.City
+    State = orderForm.State
+    Zip = orderForm.Zip
+    FreeSoda = int16 orderForm.FreeSoda
+  }
+  
+type ReserverationForm =
+  {
+    ReserverationID : string
+    Name : string
+    Date : string
     PhoneNumber : string
   }
 
-let supplierForm : Form<SupplierForm> = Form ([],[])
+let reserverationForm : Form<ReserverationForm> = Form ([],[])
 
-let convert_supplierForm (supplierForm : SupplierForm) : Supplier =
+let convert_reserverationForm (reserverationForm : ReserverationForm) : Reserveration =
   {
-    SupplierID = int64 supplierForm.SupplierID
-    Name = supplierForm.Name
-    Address = supplierForm.Address
-    Email = supplierForm.Email
-    PhoneNumber = supplierForm.PhoneNumber
-  }
-  
-type SupplierInGroupForm =
-  {
-    SupplierInGroupID : string
-    Group : string
-    Supplier : string
-  }
-
-let supplierInGroupForm : Form<SupplierInGroupForm> = Form ([],[])
-
-let convert_supplierInGroupForm (supplierInGroupForm : SupplierInGroupForm) : SupplierInGroup =
-  {
-    SupplierInGroupID = int64 supplierInGroupForm.SupplierInGroupID
-    Group = get_groupBySId(supplierInGroupForm.Group)
-    Supplier = get_supplierBySId(supplierInGroupForm.Supplier)
+    ReserverationID = int64 reserverationForm.ReserverationID
+    Name = reserverationForm.Name
+    Date = System.DateTime.Parse(reserverationForm.Date)
+    PhoneNumber = reserverationForm.PhoneNumber
   }
   

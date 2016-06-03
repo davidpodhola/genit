@@ -1,8 +1,8 @@
 
 use master;
 GO
-ALTER DATABASE office_suppliers_details SET SINGLE_USER
+ALTER DATABASE bobs_burgers SET SINGLE_USER
 GO
-DROP DATABASE office_suppliers_details
+DROP DATABASE bobs_burgers
 GO
-CREATE DATABASE office_suppliers_details;
+CREATE DATABASE bobs_burgers;

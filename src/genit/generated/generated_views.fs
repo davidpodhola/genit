@@ -9,7 +9,7 @@ open generated_data_access
 open generated_types
 open generator
 
-let brand = "Office Suppliers Details"
+let brand = "Bob's Burgers"
 
 let view_jumbo_home =
   base_html
@@ -18,109 +18,258 @@ let view_jumbo_home =
       base_header brand
       divClass "container" [
         divClass "jumbotron" [
-          h1 (sprintf "Welcome to Office Suppliers Details!")
+          h1 (sprintf "Welcome to Bob's Burgers!")
         ]
       ]
     ]
     scripts.common
 
-let view_create_group =
+let view_register =
   base_html
-    "Create Group"
+    "Register"
+    [
+      base_header brand
+      common_register_form
+        "Register"
+        [
+          hiddenInput "UserID" "-1"
+          icon_label_text "First Name" "" "user"
+          icon_label_text "Last Name" "" "user"
+          icon_label_text "Email" "" "envelope"
+          icon_password_text "Password" "" "lock"
+          icon_password_text "Confirm Password" "" "lock"
+        ]
+    ]
+    scripts.common
+
+let view_errored_register errors (registerForm : RegisterForm) =
+  base_html
+    "Register"
+    [
+      base_header brand
+      common_register_form
+        "Register"
+        [
+          hiddenInput "UserID" registerForm.UserID 
+          errored_icon_label_text "First Name" registerForm.FirstName "user" errors
+          errored_icon_label_text "Last Name" registerForm.LastName "user" errors
+          errored_icon_label_text "Email" registerForm.Email "envelope" errors
+          errored_icon_password_text "Password" registerForm.Password "lock" errors
+          errored_icon_password_text "Confirm Password" registerForm.ConfirmPassword "lock" errors
+        ]
+    ]
+    scripts.common
+
+let view_login error email =
+  let errorTag =
+    if error
+    then stand_alone_error "Invalid email or password"
+    else emptyText
+
+  base_html
+    "Login"
+    [
+      base_header brand
+      common_register_form
+        "Login"
+        [
+          errorTag
+          hiddenInput "UserID" "-1"
+          icon_label_text "Email" email "envelope"
+          icon_password_text "Password" "" "lock"
+        ]
+    ]
+    scripts.common
+
+let view_errored_login errors (loginForm : LoginForm) =
+  base_html
+    "Login"
+    [
+      base_header brand
+      common_register_form
+        "Login"
+        [
+          hiddenInput "UserID" loginForm.UserID 
+          errored_icon_label_text "Email" loginForm.Email "envelope" errors
+          errored_icon_password_text "Password" loginForm.Password "lock" errors
+        ]
+    ]
+    scripts.common
+
+let view_create_order =
+  base_html
+    "Create Order"
     [
       base_header brand
       common_form
-        "Create Group"
+        "Create Order"
         [
-          hiddenInput "GroupID" "-1"
+          hiddenInput "OrderID" "-1"
           label_text "Name" ""
+          label_text "Food" ""
+          label_text "Drinks" ""
+          label_text "Tip" ""
+          label_textarea "Notes" ""
+          label_datetime "Delivery Date" ""
+          label_text "Phone Number" ""
+          label_text "Address" ""
+          label_text "City" ""
+          label_text "State" ""
+          label_text "Zip" ""
+          label_select "Free Soda" [("0", ""); ("1", "Cola"); ("2", "Orange"); ("3", "Root Beer")]
         ]
     ]
     scripts.common
 
-let view_create_errored_group errors (groupForm : GroupForm) =
+let view_create_errored_order errors (orderForm : OrderForm) =
   base_html
-    "Create Group"
+    "Create Order"
     [
       base_header brand
       common_form
-        "Create Group"
+        "Create Order"
         [
-          hiddenInput "GroupID" groupForm.GroupID 
-          errored_label_text "Name" (string groupForm.Name) errors
+          hiddenInput "OrderID" orderForm.OrderID 
+          errored_label_text "Name" (string orderForm.Name) errors
+          errored_label_text "Food" (string orderForm.Food) errors
+          errored_label_text "Drinks" (string orderForm.Drinks) errors
+          errored_label_text "Tip" (string orderForm.Tip) errors
+          errored_label_textarea "Notes" (string orderForm.Notes) errors
+          errored_label_datetime "Delivery Date" (string orderForm.DeliveryDate) errors
+          errored_label_text "Phone Number" (string orderForm.PhoneNumber) errors
+          errored_label_text "Address" (string orderForm.Address) errors
+          errored_label_text "City" (string orderForm.City) errors
+          errored_label_text "State" (string orderForm.State) errors
+          errored_label_text "Zip" (string orderForm.Zip) errors
+          errored_label_select "Free Soda" [("0", ""); ("1", "Cola"); ("2", "Orange"); ("3", "Root Beer")] (Some orderForm.FreeSoda) errors
         ]
     ]
     scripts.common
 
-let view_view_group (group : Group) =
-  let button = [ button_small_success (sprintf "/group/edit/%i" group.GroupID) [ text "Edit"] ]
+let view_view_order (order : Order) =
+  let button = [ button_small_success (sprintf "/order/edit/%i" order.OrderID) [ text "Edit"] ]
   base_html
-    "Group"
+    "Order"
     [
       base_header brand
       common_static_form button
-        "Group"
+        "Order"
         [
           
-          label_static "Name" group.Name 
+          label_static "Name" order.Name 
+          label_static "Food" order.Food 
+          label_static "Drinks" order.Drinks 
+          label_static "Tip" order.Tip 
+          label_static "Notes" order.Notes 
+          label_static "Delivery Date" order.DeliveryDate 
+          label_static "Phone Number" order.PhoneNumber 
+          label_static "Address" order.Address 
+          label_static "City" order.City 
+          label_static "State" order.State 
+          label_static "Zip" order.Zip 
+          label_static "Free Soda" order.FreeSoda 
         ]
     ]
     scripts.common
 
-let view_edit_group (group : Group) =
+let view_edit_order (order : Order) =
   base_html
-    "Edit Group"
+    "Edit Order"
     [
       base_header brand
       common_form
-        "Edit Group"
+        "Edit Order"
         [
-          hiddenInput "GroupID" group.GroupID 
-          label_text "Name" group.Name
+          hiddenInput "OrderID" order.OrderID 
+          label_text "Name" order.Name
+          label_text "Food" order.Food
+          label_text "Drinks" order.Drinks
+          label_text "Tip" order.Tip
+          label_textarea "Notes" order.Notes
+          label_datetime "Delivery Date" order.DeliveryDate
+          label_text "Phone Number" order.PhoneNumber
+          label_text "Address" order.Address
+          label_text "City" order.City
+          label_text "State" order.State
+          label_text "Zip" order.Zip
+          label_select_selected "Free Soda" [("0", ""); ("1", "Cola"); ("2", "Orange"); ("3", "Root Beer")] (Some order.FreeSoda)
         ]
     ]
     scripts.common
 
-let view_edit_errored_group errors (groupForm : GroupForm) =
+let view_edit_errored_order errors (orderForm : OrderForm) =
   base_html
-    "Edit Group"
+    "Edit Order"
     [
       base_header brand
       common_form
-        "Edit Group"
+        "Edit Order"
         [
-          hiddenInput "GroupID" groupForm.GroupID 
-          errored_label_text "Name" (string groupForm.Name) errors
+          hiddenInput "OrderID" orderForm.OrderID 
+          errored_label_text "Name" (string orderForm.Name) errors
+          errored_label_text "Food" (string orderForm.Food) errors
+          errored_label_text "Drinks" (string orderForm.Drinks) errors
+          errored_label_text "Tip" (string orderForm.Tip) errors
+          errored_label_textarea "Notes" (string orderForm.Notes) errors
+          errored_label_datetime "Delivery Date" (string orderForm.DeliveryDate) errors
+          errored_label_text "Phone Number" (string orderForm.PhoneNumber) errors
+          errored_label_text "Address" (string orderForm.Address) errors
+          errored_label_text "City" (string orderForm.City) errors
+          errored_label_text "State" (string orderForm.State) errors
+          errored_label_text "Zip" (string orderForm.Zip) errors
+          errored_label_select "Free Soda" [("0", ""); ("1", "Cola"); ("2", "Orange"); ("3", "Root Beer")] (Some orderForm.FreeSoda) errors
         ]
     ]
     scripts.common
 
-let view_list_group groups =
-  let toTr (group : Group) inner =
-    trLink (sprintf "/group/view/%i" group.GroupID) inner
+let view_list_order orders =
+  let toTr (order : Order) inner =
+    trLink (sprintf "/order/view/%i" order.OrderID) inner
 
-  let toTd (group : Group) =
+  let toTd (order : Order) =
     [
-        td [ text (string group.GroupID) ]
-        td [ text (string group.Name) ]
+        td [ text (string order.OrderID) ]
+        td [ text (string order.Name) ]
+        td [ text (string order.Food) ]
+        td [ text (string order.Drinks) ]
+        td [ text (string order.Tip) ]
+        td [ text (string order.Notes) ]
+        td [ text (string order.DeliveryDate) ]
+        td [ text (string order.PhoneNumber) ]
+        td [ text (string order.Address) ]
+        td [ text (string order.City) ]
+        td [ text (string order.State) ]
+        td [ text (string order.Zip) ]
+        td [ text (string order.FreeSoda) ]
     ]
 
   base_html
-    "List Group"
+    "List Order"
     [
       base_header brand
       container [
         row [
           mcontent [
             block_flat [
-              header [ h3Inner "List Groups" [ pull_right [ button_small_success "/group/create" [ text "Create"] ] ] ]
+              header [ h3Inner "List Orders" [ pull_right [ button_small_success "/order/create" [ text "Create"] ] ] ]
               content [
                 table_bordered_linked_tr
                   [
-                    "Group ID"
+                    "Order ID"
                     "Name"
+                    "Food"
+                    "Drinks"
+                    "Tip"
+                    "Notes"
+                    "Delivery Date"
+                    "Phone Number"
+                    "Address"
+                    "City"
+                    "State"
+                    "Zip"
+                    "Free Soda"
                   ]
-                  groups toTd toTr
+                  orders toTd toTr
               ]
             ]
           ]
@@ -129,20 +278,31 @@ let view_list_group groups =
     ]
     scripts.datatable_bundle
 
-let view_search_group field how value groups =
+let view_search_order field how value orders =
   let fields = ["Name", "Name"; "Food","Food"; "City", "City"]
   let hows = ["Equals", "Equals"; "Begins With","Begins With"]
-  let toTr (group : Group) inner =
-    trLink (sprintf "/group/view/%i" group.GroupID) inner
+  let toTr (order : Order) inner =
+    trLink (sprintf "/order/view/%i" order.OrderID) inner
 
-  let toTd (group : Group) =
+  let toTd (order : Order) =
     [
-        td [ text (string group.GroupID) ]
-        td [ text (string group.Name) ]
+        td [ text (string order.OrderID) ]
+        td [ text (string order.Name) ]
+        td [ text (string order.Food) ]
+        td [ text (string order.Drinks) ]
+        td [ text (string order.Tip) ]
+        td [ text (string order.Notes) ]
+        td [ text (string order.DeliveryDate) ]
+        td [ text (string order.PhoneNumber) ]
+        td [ text (string order.Address) ]
+        td [ text (string order.City) ]
+        td [ text (string order.State) ]
+        td [ text (string order.Zip) ]
+        td [ text (string order.FreeSoda) ]
     ]
 
   base_html
-    "Search Group"
+    "Search Order"
     [
       base_header brand
       container [
@@ -150,7 +310,7 @@ let view_search_group field how value groups =
           mcontent [
             block_flat [
               header [
-                h3Inner "Search Groups" [ ]
+                h3Inner "Search Orders" [ ]
               ]
               div [
                 form_inline [
@@ -165,10 +325,21 @@ let view_search_group field how value groups =
               content [
                 table_bordered_linked_tr
                   [
-                    "Group ID"
+                    "Order ID"
                     "Name"
+                    "Food"
+                    "Drinks"
+                    "Tip"
+                    "Notes"
+                    "Delivery Date"
+                    "Phone Number"
+                    "Address"
+                    "City"
+                    "State"
+                    "Zip"
+                    "Free Soda"
                   ]
-                  groups toTd toTr
+                  orders toTd toTr
               ]
             ]
           ]
@@ -177,124 +348,117 @@ let view_search_group field how value groups =
     ]
     scripts.datatable_bundle
 
-let view_create_supplier =
+let view_create_reserveration =
   base_html
-    "Create Supplier"
+    "Create Reserveration"
     [
       base_header brand
       common_form
-        "Create Supplier"
+        "Create Reserveration"
         [
-          hiddenInput "SupplierID" "-1"
+          hiddenInput "ReserverationID" "-1"
           label_text "Name" ""
-          label_textarea "Address" ""
-          icon_label_text "Email" "" "envelope"
+          label_datetime "Date" ""
           label_text "Phone Number" ""
         ]
     ]
     scripts.common
 
-let view_create_errored_supplier errors (supplierForm : SupplierForm) =
+let view_create_errored_reserveration errors (reserverationForm : ReserverationForm) =
   base_html
-    "Create Supplier"
+    "Create Reserveration"
     [
       base_header brand
       common_form
-        "Create Supplier"
+        "Create Reserveration"
         [
-          hiddenInput "SupplierID" supplierForm.SupplierID 
-          errored_label_text "Name" (string supplierForm.Name) errors
-          errored_label_textarea "Address" (string supplierForm.Address) errors
-          errored_icon_label_text "Email" supplierForm.Email "envelope" errors
-          errored_label_text "Phone Number" (string supplierForm.PhoneNumber) errors
+          hiddenInput "ReserverationID" reserverationForm.ReserverationID 
+          errored_label_text "Name" (string reserverationForm.Name) errors
+          errored_label_datetime "Date" (string reserverationForm.Date) errors
+          errored_label_text "Phone Number" (string reserverationForm.PhoneNumber) errors
         ]
     ]
     scripts.common
 
-let view_view_supplier (supplier : Supplier) =
-  let button = [ button_small_success (sprintf "/supplier/edit/%i" supplier.SupplierID) [ text "Edit"] ]
+let view_view_reserveration (reserveration : Reserveration) =
+  let button = [ button_small_success (sprintf "/reserveration/edit/%i" reserveration.ReserverationID) [ text "Edit"] ]
   base_html
-    "Supplier"
+    "Reserveration"
     [
       base_header brand
       common_static_form button
-        "Supplier"
+        "Reserveration"
         [
           
-          label_static "Name" supplier.Name 
-          label_static "Address" supplier.Address 
-          label_static "Email" supplier.Email 
-          label_static "Phone Number" supplier.PhoneNumber 
+          label_static "Name" reserveration.Name 
+          label_static "Date" reserveration.Date 
+          label_static "Phone Number" reserveration.PhoneNumber 
         ]
     ]
     scripts.common
 
-let view_edit_supplier (supplier : Supplier) =
+let view_edit_reserveration (reserveration : Reserveration) =
   base_html
-    "Edit Supplier"
+    "Edit Reserveration"
     [
       base_header brand
       common_form
-        "Edit Supplier"
+        "Edit Reserveration"
         [
-          hiddenInput "SupplierID" supplier.SupplierID 
-          label_text "Name" supplier.Name
-          label_textarea "Address" supplier.Address
-          icon_label_text "Email" supplier.Email "envelope"
-          label_text "Phone Number" supplier.PhoneNumber
+          hiddenInput "ReserverationID" reserveration.ReserverationID 
+          label_text "Name" reserveration.Name
+          label_datetime "Date" reserveration.Date
+          label_text "Phone Number" reserveration.PhoneNumber
         ]
     ]
     scripts.common
 
-let view_edit_errored_supplier errors (supplierForm : SupplierForm) =
+let view_edit_errored_reserveration errors (reserverationForm : ReserverationForm) =
   base_html
-    "Edit Supplier"
+    "Edit Reserveration"
     [
       base_header brand
       common_form
-        "Edit Supplier"
+        "Edit Reserveration"
         [
-          hiddenInput "SupplierID" supplierForm.SupplierID 
-          errored_label_text "Name" (string supplierForm.Name) errors
-          errored_label_textarea "Address" (string supplierForm.Address) errors
-          errored_icon_label_text "Email" supplierForm.Email "envelope" errors
-          errored_label_text "Phone Number" (string supplierForm.PhoneNumber) errors
+          hiddenInput "ReserverationID" reserverationForm.ReserverationID 
+          errored_label_text "Name" (string reserverationForm.Name) errors
+          errored_label_datetime "Date" (string reserverationForm.Date) errors
+          errored_label_text "Phone Number" (string reserverationForm.PhoneNumber) errors
         ]
     ]
     scripts.common
 
-let view_list_supplier suppliers =
-  let toTr (supplier : Supplier) inner =
-    trLink (sprintf "/supplier/view/%i" supplier.SupplierID) inner
+let view_list_reserveration reserverations =
+  let toTr (reserveration : Reserveration) inner =
+    trLink (sprintf "/reserveration/view/%i" reserveration.ReserverationID) inner
 
-  let toTd (supplier : Supplier) =
+  let toTd (reserveration : Reserveration) =
     [
-        td [ text (string supplier.SupplierID) ]
-        td [ text (string supplier.Name) ]
-        td [ text (string supplier.Address) ]
-        td [ text (string supplier.Email) ]
-        td [ text (string supplier.PhoneNumber) ]
+        td [ text (string reserveration.ReserverationID) ]
+        td [ text (string reserveration.Name) ]
+        td [ text (string reserveration.Date) ]
+        td [ text (string reserveration.PhoneNumber) ]
     ]
 
   base_html
-    "List Supplier"
+    "List Reserveration"
     [
       base_header brand
       container [
         row [
           mcontent [
             block_flat [
-              header [ h3Inner "List Suppliers" [ pull_right [ button_small_success "/supplier/create" [ text "Create"] ] ] ]
+              header [ h3Inner "List Reserverations" [ pull_right [ button_small_success "/reserveration/create" [ text "Create"] ] ] ]
               content [
                 table_bordered_linked_tr
                   [
-                    "Supplier ID"
+                    "Reserveration ID"
                     "Name"
-                    "Address"
-                    "Email"
+                    "Date"
                     "Phone Number"
                   ]
-                  suppliers toTd toTr
+                  reserverations toTd toTr
               ]
             ]
           ]
@@ -303,23 +467,22 @@ let view_list_supplier suppliers =
     ]
     scripts.datatable_bundle
 
-let view_search_supplier field how value suppliers =
+let view_search_reserveration field how value reserverations =
   let fields = ["Name", "Name"; "Food","Food"; "City", "City"]
   let hows = ["Equals", "Equals"; "Begins With","Begins With"]
-  let toTr (supplier : Supplier) inner =
-    trLink (sprintf "/supplier/view/%i" supplier.SupplierID) inner
+  let toTr (reserveration : Reserveration) inner =
+    trLink (sprintf "/reserveration/view/%i" reserveration.ReserverationID) inner
 
-  let toTd (supplier : Supplier) =
+  let toTd (reserveration : Reserveration) =
     [
-        td [ text (string supplier.SupplierID) ]
-        td [ text (string supplier.Name) ]
-        td [ text (string supplier.Address) ]
-        td [ text (string supplier.Email) ]
-        td [ text (string supplier.PhoneNumber) ]
+        td [ text (string reserveration.ReserverationID) ]
+        td [ text (string reserveration.Name) ]
+        td [ text (string reserveration.Date) ]
+        td [ text (string reserveration.PhoneNumber) ]
     ]
 
   base_html
-    "Search Supplier"
+    "Search Reserveration"
     [
       base_header brand
       container [
@@ -327,7 +490,7 @@ let view_search_supplier field how value suppliers =
           mcontent [
             block_flat [
               header [
-                h3Inner "Search Suppliers" [ ]
+                h3Inner "Search Reserverations" [ ]
               ]
               div [
                 form_inline [
@@ -342,175 +505,12 @@ let view_search_supplier field how value suppliers =
               content [
                 table_bordered_linked_tr
                   [
-                    "Supplier ID"
+                    "Reserveration ID"
                     "Name"
-                    "Address"
-                    "Email"
+                    "Date"
                     "Phone Number"
                   ]
-                  suppliers toTd toTr
-              ]
-            ]
-          ]
-        ]
-      ]
-    ]
-    scripts.datatable_bundle
-
-let view_create_supplierInGroup =
-  base_html
-    "Create SupplierInGroup"
-    [
-      base_header brand
-      common_form
-        "Create SupplierInGroup"
-        [
-          hiddenInput "SupplierInGroupID" "-1"
-          label_select "Group" (zipOptions getMany_group_Names)
-          label_select "Supplier" (zipOptions getMany_supplier_Names)
-        ]
-    ]
-    scripts.common
-
-let view_create_errored_supplierInGroup errors (supplierInGroupForm : SupplierInGroupForm) =
-  base_html
-    "Create SupplierInGroup"
-    [
-      base_header brand
-      common_form
-        "Create SupplierInGroup"
-        [
-          hiddenInput "SupplierInGroupID" supplierInGroupForm.SupplierInGroupID 
-          errored_label_select "Group" (zipOptions getMany_group_Names) (Some supplierInGroupForm.Group) errors
-          errored_label_select "Supplier" (zipOptions getMany_supplier_Names) (Some supplierInGroupForm.Supplier) errors
-        ]
-    ]
-    scripts.common
-
-let view_view_supplierInGroup (supplierInGroup : SupplierInGroup) =
-  let button = [ button_small_success (sprintf "/supplierInGroup/edit/%i" supplierInGroup.SupplierInGroupID) [ text "Edit"] ]
-  base_html
-    "SupplierInGroup"
-    [
-      base_header brand
-      common_static_form button
-        "SupplierInGroup"
-        [
-          
-          label_static "Group" supplierInGroup.Group 
-          label_static "Supplier" supplierInGroup.Supplier 
-        ]
-    ]
-    scripts.common
-
-let view_edit_supplierInGroup (supplierInGroup : SupplierInGroup) =
-  base_html
-    "Edit SupplierInGroup"
-    [
-      base_header brand
-      common_form
-        "Edit SupplierInGroup"
-        [
-          hiddenInput "SupplierInGroupID" supplierInGroup.SupplierInGroupID 
-          label_select_selected "Group" (zipOptions getMany_group_Names) (Some supplierInGroup.Group)
-          label_select_selected "Supplier" (zipOptions getMany_supplier_Names) (Some supplierInGroup.Supplier)
-        ]
-    ]
-    scripts.common
-
-let view_edit_errored_supplierInGroup errors (supplierInGroupForm : SupplierInGroupForm) =
-  base_html
-    "Edit SupplierInGroup"
-    [
-      base_header brand
-      common_form
-        "Edit SupplierInGroup"
-        [
-          hiddenInput "SupplierInGroupID" supplierInGroupForm.SupplierInGroupID 
-          errored_label_select "Group" (zipOptions getMany_group_Names) (Some supplierInGroupForm.Group) errors
-          errored_label_select "Supplier" (zipOptions getMany_supplier_Names) (Some supplierInGroupForm.Supplier) errors
-        ]
-    ]
-    scripts.common
-
-let view_list_supplierInGroup supplierInGroups =
-  let toTr (supplierInGroup : SupplierInGroup) inner =
-    trLink (sprintf "/supplierInGroup/view/%i" supplierInGroup.SupplierInGroupID) inner
-
-  let toTd (supplierInGroup : SupplierInGroup) =
-    [
-        td [ text (string supplierInGroup.SupplierInGroupID) ]
-        td [ text (string supplierInGroup.Group) ]
-        td [ text (string supplierInGroup.Supplier) ]
-    ]
-
-  base_html
-    "List SupplierInGroup"
-    [
-      base_header brand
-      container [
-        row [
-          mcontent [
-            block_flat [
-              header [ h3Inner "List SupplierInGroups" [ pull_right [ button_small_success "/supplierInGroup/create" [ text "Create"] ] ] ]
-              content [
-                table_bordered_linked_tr
-                  [
-                    "SupplierInGroup ID"
-                    "Group"
-                    "Supplier"
-                  ]
-                  supplierInGroups toTd toTr
-              ]
-            ]
-          ]
-        ]
-      ]
-    ]
-    scripts.datatable_bundle
-
-let view_search_supplierInGroup field how value supplierInGroups =
-  let fields = ["Name", "Name"; "Food","Food"; "City", "City"]
-  let hows = ["Equals", "Equals"; "Begins With","Begins With"]
-  let toTr (supplierInGroup : SupplierInGroup) inner =
-    trLink (sprintf "/supplierInGroup/view/%i" supplierInGroup.SupplierInGroupID) inner
-
-  let toTd (supplierInGroup : SupplierInGroup) =
-    [
-        td [ text (string supplierInGroup.SupplierInGroupID) ]
-        td [ text (string supplierInGroup.Group) ]
-        td [ text (string supplierInGroup.Supplier) ]
-    ]
-
-  base_html
-    "Search SupplierInGroup"
-    [
-      base_header brand
-      container [
-        row [
-          mcontent [
-            block_flat [
-              header [
-                h3Inner "Search SupplierInGroups" [ ]
-              ]
-              div [
-                form_inline [
-                  content [
-                    inline_label_select_selected "Field" fields field
-                    inline_label_select_selected"How" hows how
-                    inline_label_text "Value" value
-                    pull_right [ button_submit ]
-                  ]
-                ]
-              ]
-              content [
-                table_bordered_linked_tr
-                  [
-                    "SupplierInGroup ID"
-                    "Group"
-                    "Supplier"
-                  ]
-                  supplierInGroups toTd toTr
+                  reserverations toTd toTr
               ]
             ]
           ]

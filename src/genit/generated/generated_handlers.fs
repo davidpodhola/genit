@@ -24,90 +24,97 @@ open forms
 
 let home = GET >=> OK view_jumbo_home
 
-let create_group =
+let register =
   choose
     [
-      GET >=> request (fun req -> createOrGenerateGET req bundle_group)
-      POST >=> bindToForm groupForm (fun form -> createPOST form bundle_group)
+      GET >=> OK view_register
+      POST >=> bindToForm registerForm (fun registerForm ->
+        let validation = validation_registerForm registerForm
+        if validation = [] then
+          let converted = convert_registerForm registerForm
+          let id = insert_register converted
+          setAuthCookieAndRedirect id "/"
+        else
+          OK (view_errored_register validation registerForm))
     ]
 
-let view_group id =
-  GET >=> warbler (fun _ -> viewGET id bundle_group)
-
-let edit_group id =
+let login =
   choose
     [
-      GET >=> warbler (fun _ -> editGET id bundle_group)
-      POST >=> bindToForm groupForm (fun groupForm -> editPOST id groupForm bundle_group)
+      GET >=> (OK <| view_login false "")
+      POST >=> request (fun req ->
+        bindToForm loginForm (fun loginForm ->
+        let validation = validation_loginForm loginForm
+        if validation = [] then
+          let converted = convert_loginForm loginForm
+          let loginAttempt = authenticate converted
+          match loginAttempt with
+            | Some(loginAttempt) ->
+              let returnPath = getQueryStringValue req "returnPath"
+              let returnPath = if returnPath = "" then "/" else returnPath
+              setAuthCookieAndRedirect id returnPath
+            | None -> OK <| view_login true loginForm.Email
+        else
+          OK (view_errored_login validation loginForm)))
     ]
 
-let list_group =
-  GET >=> warbler (fun _ -> getMany_group () |> view_list_group |> OK)
-
-let search_group =
+let create_order =
   choose
     [
-      GET >=> request (fun req -> searchGET req bundle_group)
-      POST >=> bindToForm searchForm (fun searchForm -> searchPOST searchForm bundle_group)
+      GET >=> request (fun req -> createOrGenerateGET req bundle_order)
+      POST >=> bindToForm orderForm (fun form -> createPOST form bundle_order)
     ]
 
-let create_supplier =
+let view_order id =
+  GET >=> warbler (fun _ -> viewGET id bundle_order)
+
+let edit_order id =
   choose
     [
-      GET >=> request (fun req -> createOrGenerateGET req bundle_supplier)
-      POST >=> bindToForm supplierForm (fun form -> createPOST form bundle_supplier)
+      GET >=> warbler (fun _ -> editGET id bundle_order)
+      POST >=> bindToForm orderForm (fun orderForm -> editPOST id orderForm bundle_order)
     ]
 
-let view_supplier id =
-  GET >=> warbler (fun _ -> viewGET id bundle_supplier)
+let list_order =
+  GET >=> warbler (fun _ -> getMany_order () |> view_list_order |> OK)
 
-let edit_supplier id =
+let search_order =
   choose
     [
-      GET >=> warbler (fun _ -> editGET id bundle_supplier)
-      POST >=> bindToForm supplierForm (fun supplierForm -> editPOST id supplierForm bundle_supplier)
+      GET >=> request (fun req -> searchGET req bundle_order)
+      POST >=> bindToForm searchForm (fun searchForm -> searchPOST searchForm bundle_order)
     ]
 
-let list_supplier =
-  GET >=> warbler (fun _ -> getMany_supplier () |> view_list_supplier |> OK)
-
-let search_supplier =
+let create_reserveration =
   choose
     [
-      GET >=> request (fun req -> searchGET req bundle_supplier)
-      POST >=> bindToForm searchForm (fun searchForm -> searchPOST searchForm bundle_supplier)
+      GET >=> request (fun req -> createOrGenerateGET req bundle_reserveration)
+      POST >=> bindToForm reserverationForm (fun form -> createPOST form bundle_reserveration)
     ]
 
-let create_supplierInGroup =
+let view_reserveration id =
+  GET >=> warbler (fun _ -> viewGET id bundle_reserveration)
+
+let edit_reserveration id =
   choose
     [
-      GET >=> request (fun req -> createOrGenerateGET req bundle_supplierInGroup)
-      POST >=> bindToForm supplierInGroupForm (fun form -> createPOST form bundle_supplierInGroup)
+      GET >=> warbler (fun _ -> editGET id bundle_reserveration)
+      POST >=> bindToForm reserverationForm (fun reserverationForm -> editPOST id reserverationForm bundle_reserveration)
     ]
 
-let view_supplierInGroup id =
-  GET >=> warbler (fun _ -> viewGET id bundle_supplierInGroup)
+let list_reserveration =
+  GET >=> warbler (fun _ -> getMany_reserveration () |> view_list_reserveration |> OK)
 
-let edit_supplierInGroup id =
+let search_reserveration =
   choose
     [
-      GET >=> warbler (fun _ -> editGET id bundle_supplierInGroup)
-      POST >=> bindToForm supplierInGroupForm (fun supplierInGroupForm -> editPOST id supplierInGroupForm bundle_supplierInGroup)
+      GET >=> request (fun req -> searchGET req bundle_reserveration)
+      POST >=> bindToForm searchForm (fun searchForm -> searchPOST searchForm bundle_reserveration)
     ]
 
-let list_supplierInGroup =
-  GET >=> warbler (fun _ -> getMany_supplierInGroup () |> view_list_supplierInGroup |> OK)
-
-let search_supplierInGroup =
-  choose
-    [
-      GET >=> request (fun req -> searchGET req bundle_supplierInGroup)
-      POST >=> bindToForm searchForm (fun searchForm -> searchPOST searchForm bundle_supplierInGroup)
-    ]
-
-let api_group id =
+let api_order id =
   GET >=> request (fun req ->
-    let data = tryById_group id
+    let data = tryById_order id
     match data with
     | None -> OK error_404
     | Some(data) ->

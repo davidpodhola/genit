@@ -1,24 +1,43 @@
 module generated_types
 
-type Group =
+type Register =
   {
-    GroupID : int64
-    Name : string
-  }
-  
-type Supplier =
-  {
-    SupplierID : int64
-    Name : string
-    Address : string
+    UserID : int64
+    FirstName : string
+    LastName : string
     Email : string
-    PhoneNumber : string
+    Password : string
   }
   
-type SupplierInGroup =
+type Login =
   {
-    SupplierInGroupID : int64
-    Group : Group
-    Supplier : Supplier
+    UserID : int64
+    Email : string
+    Password : string
+  }
+  
+type Order =
+  {
+    OrderID : int64
+    Name : string
+    Food : string
+    Drinks : string
+    Tip : double
+    Notes : string
+    DeliveryDate : System.DateTime
+    PhoneNumber : string
+    Address : string
+    City : string
+    State : string
+    Zip : string
+    FreeSoda : int16
+  }
+  
+type Reserveration =
+  {
+    ReserverationID : int64
+    Name : string
+    Date : System.DateTime
+    PhoneNumber : string
   }
   
