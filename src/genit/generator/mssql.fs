@@ -434,20 +434,25 @@ let fieldToConvertProperty page field =
   let decimal () = sprintf """%s = decimal %s""" field.AsProperty property
   let datetime () = sprintf """%s = System.DateTime.Parse(%s)""" field.AsProperty property
   let referenced () = sprintf """%s = get_%sBySId(%s)""" field.AsProperty (lower field.AsProperty) property
-  match field.FieldType with
-  | Id              -> int64 ()
-  | Text            -> string ()
-  | Paragraph       -> string ()
-  | Number          -> int ()
-  | Decimal         -> decimal ()
-  | Date            -> datetime ()
-  | Email           -> string ()
-  | Name            -> string ()
-  | Phone           -> string ()
-  | Password        -> string ()
-  | ConfirmPassword -> string ()
-  | Dropdown _      -> int16 ()
-  | Referenced      -> referenced ()
+  let result = 
+    match field.FieldType with
+    | Id              -> int64 ()
+    | Text            -> string ()
+    | Paragraph       -> string ()
+    | Number          -> int ()
+    | Decimal         -> decimal ()
+    | Date            -> datetime ()
+    | Email           -> string ()
+    | Name            -> string ()
+    | Phone           -> string ()
+    | Password        -> string ()
+    | ConfirmPassword -> string ()
+    | Dropdown _      -> int16 ()
+    | Referenced      -> referenced ()
+  if field.Attribute = Null then
+    sprintf "Some(%s)" result
+  else
+    result
 
 let fakePropertyTemplate (field : Field) =
   let lowered = field.Name.ToLower()
