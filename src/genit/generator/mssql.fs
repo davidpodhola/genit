@@ -2,9 +2,10 @@ module mssql
 
 open dsl
 open helper_general
+open System
 
 let createTemplate (dbname:string) =
-  System.String.Format("""
+  String.Format("""
 use master;
 GO
 ALTER DATABASE {0} SET SINGLE_USER
@@ -36,6 +37,7 @@ let columnTypeTemplate field =
   | Password        -> "varchar(60)"
   | ConfirmPassword -> ""
   | Dropdown (_)    -> "smallint"
+  | Referenced      -> "int"
 
 //http://www.postgresql.org/docs/9.5/static/ddl-constraints.html
 let columnAttributesTemplate (field : Field) =
@@ -46,6 +48,7 @@ let columnAttributesTemplate (field : Field) =
   | Min(min)        -> sprintf "CHECK (%s > %i)" field.AsDBColumn min
   | Max(max)        -> sprintf "CHECK (%s < %i)" field.AsDBColumn max
   | Range(min, max) -> sprintf "CHECK (%i < %s < %i)" min field.AsDBColumn max
+  | Reference(table,required) -> sprintf "REFERENCES [%s] (%s) %s" (to_tableName table) field.AsDBColumn (if required then "NOT NULL" else "NULL")
 
 let columnTemplate namePad typePad (field : Field) =
  sprintf "%s %s %s" (rightPad namePad field.AsDBColumn) (rightPad typePad (columnTypeTemplate field)) (columnAttributesTemplate field)
@@ -107,23 +110,24 @@ DATA READERS
 
 *)
 
-let conversionTemplate field =
+let readConversionTemplate field =
   match field.FieldType with
-  | Id              -> "getInt64"
-  | Text            -> "getString"
-  | Paragraph       -> "getString"
-  | Number          -> "getInt32"
-  | Decimal         -> "getDouble"
-  | Date            -> "getDateTime"
-  | Phone           -> "getString"
-  | Email           -> "getString"
-  | Name            -> "getString"
-  | Password        -> "getString"
+  | Id              -> "int64"
+  | Text            -> ""
+  | Paragraph       -> ""
+  | Number          -> ""
+  | Decimal         -> ""
+  | Date            -> ""
+  | Phone           -> ""
+  | Email           -> ""
+  | Name            -> ""
+  | Password        -> ""
   | ConfirmPassword -> ""
-  | Dropdown (_)    -> "getInt16"
+  | Dropdown (_)    -> ""
+  | Referenced      -> sprintf "get_%sById" (to_dbColumn field.Name)
 
 let dataReaderPropertyTemplate field =
- sprintf """%s = %s "%s" reader""" field.AsProperty (conversionTemplate field) field.AsDBColumn
+ sprintf """%s = %s record.%s;""" field.AsProperty (readConversionTemplate field)  field.AsDBColumn
 
 let dataReaderPropertiesTemplate page =
   page.Fields
@@ -133,13 +137,20 @@ let dataReaderPropertiesTemplate page =
   |> flatten
 
 let dataReaderTemplate page =
-  sprintf """let to%s (reader : NpgsqlDataReader) : %s list =
-  [ while reader.Read() do
-    yield {
-%s
-    }
-  ]
-  """ page.AsType page.AsType (dataReaderPropertiesTemplate page)
+  let idField = page.Fields |> List.find (fun field -> field.FieldType = Id)
+  System.String.Format(
+    sprintf """
+[<Literal>]
+let {0}QuerySQL = "DECLARE @id int = @p0; SELECT TOP 500 * FROM %s WHERE %s=(CASE WHEN @id=0 THEN %s ELSE @id END )"
+type {0}Query = SqlCommandProvider< {0}QuerySQL, connectionString>
+  
+let to{0} (a:{0}Query.Record seq )  : %s list =
+  a |> Seq.map( fun record -> 
+  {{ 
+    %s
+  }} ) 
+  |> Seq.toList
+    """ page.AsTable idField.AsDBColumn idField.AsDBColumn page.AsType (dataReaderPropertiesTemplate page), page.AsVal)
 
 (*
 
@@ -149,7 +160,7 @@ INSERT
 
 let insertColumns page =
   page.Fields
-  |> List.filter (fun field -> field.FieldType <> ConfirmPassword)
+  |> List.filter (fun field -> field.FieldType <> ConfirmPassword && field.FieldType <> Id )
   |> List.map (fun field -> field.AsDBColumn)
   |> List.map (pad 2)
   |> flattenWith ","
@@ -167,48 +178,46 @@ let passwordTemplate page =
 
 let insertValues page =
   let format field =
-    if field.FieldType = Id
-    then "DEFAULT"
-    else sprintf ":%s" field.AsDBColumn
+    sprintf "@%s" field.AsDBColumn
 
   page.Fields
-  |> List.filter (fun field -> field.FieldType <> ConfirmPassword)
+  |> List.filter (fun field -> field.FieldType <> ConfirmPassword && field.FieldType <> Id )
   |> List.map format
   |> List.map (pad 2)
   |> flattenWith ","
 
 let insertParamTemplate page field =
   if field.FieldType = Password
-  then sprintf """|> param "%s" password""" field.AsDBColumn
-  else sprintf """|> param "%s" %s.%s""" field.AsDBColumn page.AsVal field.AsProperty
+  then sprintf """%s password""" field.AsDBColumn
+  else if field.FieldType = Referenced 
+  then sprintf """int %s.%s.%sID""" page.AsVal field.AsProperty field.AsProperty
+  else sprintf """%s.%s""" page.AsVal field.AsProperty
 
 let insertParamsTemplate page =
   page.Fields
   |> List.filter (fun field -> field.FieldType <> Id && field.FieldType <> ConfirmPassword)
   |> List.map (insertParamTemplate page)
   |> List.map (pad 1)
-  |> flatten
+  |> flattenWith ","
 
 let insertTemplate site page =
-  let idField = page.Fields |> List.find (fun field -> field.FieldType = Id)
-  sprintf """
-let insert_%s (%s : %s) =
-  let sql = "
-INSERT INTO %s.%s
-  (
-%s
-  ) VALUES (
-%s
-  ) RETURNING %s;
-"
-%s
-  use connection = connection connectionString
-  use command = command connection sql
-  command
-%s
-  |> executeScalar
-  |> string |> int64
-  """ page.AsVal page.AsVal page.AsType site.AsDatabase page.AsTable (insertColumns page) (insertValues page) idField.AsDBColumn (passwordTemplate page) (insertParamsTemplate page)
+  String.Format(
+    sprintf """
+
+[<Literal>]
+let sql_insert_{0} = "
+INSERT INTO %s
+    (
+  %s
+    ) VALUES (
+  %s
+    ); SELECT SCOPE_IDENTITY()
+  "
+let insert_{0} ({0} : %s) =
+  %s
+    use command = new SqlCommandProvider<sql_insert_{0}, connectionString>(connectionString)
+    command.Execute(%s) |> Seq.head |> Option.get |> int64
+    """ page.AsTable (insertColumns page) (insertValues page) page.AsType  (passwordTemplate page) (insertParamsTemplate page), page.AsVal )
 
 (*
 
@@ -218,34 +227,38 @@ UPDATE
 
 let updateColumns page =
   page.Fields
-  |> List.filter (fun field -> field.FieldType <> ConfirmPassword)
-  |> List.map (fun field -> sprintf """%s = :%s""" field.AsDBColumn field.AsDBColumn)
+  |> List.filter (fun field -> field.FieldType <> ConfirmPassword && field.FieldType <> Id)
+  |> List.map (fun field -> sprintf """%s = @%s""" field.AsDBColumn field.AsDBColumn)
   |> List.map (pad 1)
   |> flattenWith ","
 
 let updateParamsTemplate page =
   page.Fields
   |> List.filter (fun field -> field.FieldType <> ConfirmPassword)
-  |> List.map (fun field -> sprintf """|> param "%s" %s.%s""" field.AsDBColumn page.AsVal field.AsProperty)
+  |> List.map (fun field -> 
+    if field.FieldType = Referenced 
+      then sprintf """int %s.%s.%sID""" page.AsVal field.AsProperty field.AsProperty
+      else sprintf """%s.%s""" page.AsVal field.AsProperty
+  )
   |> List.map (pad 1)
-  |> flatten
+  |> flattenWith ","
 
 let updateTemplate site page =
   let idField = page.Fields |> List.find (fun field -> field.FieldType = Id)
-  sprintf """
-let update_%s (%s : %s) =
-  let sql = "
-UPDATE %s.%s
-SET
-%s
-WHERE %s = :%s;
-"
-  use connection = connection connectionString
-  use command = command connection sql
-  command
-%s
-  |> executeNonQuery
-  """ page.AsVal page.AsVal page.AsType site.AsDatabase page.AsTable (updateColumns page) idField.AsDBColumn idField.AsDBColumn (updateParamsTemplate page)
+  String.Format(
+    sprintf """
+[<Literal>]
+let sql_update_{0} = "
+  DECLARE @id int = @%s;
+  UPDATE %s
+  SET
+  %s
+  WHERE %s = @id;
+  "
+let update_{0} ({0} : %s) =
+    use command = new SqlCommandProvider<sql_update_{0}, connectionString>(connectionString)
+    command.Execute(int %s) |> ignore
+    """  idField.AsDBColumn page.AsTable (updateColumns page) idField.AsDBColumn page.AsType  (updateParamsTemplate page), page.AsVal )
 
 (*
 
@@ -254,49 +267,37 @@ SELECT
 *)
 
 let tryByIdTemplate site page =
-  let idField = page.Fields |> List.find (fun field -> field.FieldType = Id)
-  sprintf """
-let tryById_%s id =
-  let sql = "
-SELECT * FROM %s.%s
-WHERE %s = :%s
-"
-  use connection = connection connectionString
-  use command = command connection sql
-  command
-  |> param "%s" id
-  |> read to%s
-  |> firstOrNone""" page.AsVal site.AsDatabase page.AsTable idField.AsDBColumn idField.AsDBColumn idField.AsDBColumn page.AsType
+  System.String.Format(
+    sprintf """
+
+let tryById_{0} (id:int64) =
+  use cmd = new SqlCommandProvider<{0}QuerySQL, connectionString>(connectionString)
+  cmd.Execute(int id) |> to{0} |> List.tryHead    
+  
+let get_{0}ById (id:int) =
+  (tryById_{0} (int64 id)).Value
+  
+let get_{0}BySId (id:string) =
+  (tryById_{0} (int64 (System.Int32.Parse(id)))).Value
+
+    """, page.AsVal )
 
 let selectManyTemplate site page =
-  sprintf """
-let getMany_%s () =
-  let sql = "
-SELECT * FROM %s.%s
-LIMIT 500
-"
-  use connection = connection connectionString
-  use command = command connection sql
-  command
-  |> read to%s
-  """ page.AsVal site.AsDatabase page.AsTable page.AsType
+  System.String.Format(
+    sprintf """
+let getMany_{0} ()=
+  use cmd = new SqlCommandProvider<{0}QuerySQL, connectionString>(connectionString)
+  cmd.Execute(0) |> to{0}
+
+let getMany_{0}_Names =
+  getMany_{0} () |> List.map ( fun p-> p.ToString() ) 
+    """ , page.AsVal )
 
 let selectManyWhereTemplate site page =
   sprintf """
 let getManyWhere_%s field how value =
-  let field = to_dbColumn field
-  let search = searchHowToClause how value
-  let sql =
-    sprintf "SELECT * FROM %s.%s
-WHERE lower(%s) LIKE lower(:search)
-LIMIT 500" field
-
-  use connection = connection connectionString
-  use command = command connection sql
-  command
-  |> param "search" search
-  |> read to%s
-  """ page.AsVal site.AsDatabase page.AsTable "%s" page.AsType
+  getMany_%s ()
+  """ page.AsVal page.AsVal
 
 (*
 
@@ -306,18 +307,18 @@ Authentication
 
 let authenticateTemplate site page =
   sprintf """
-let authenticate (%s : %s) =
-  let sql = "
-SELECT * FROM %s.users
-WHERE email = :email
+[<Literal>]
+let sql_authenticate = "
+SELECT * FROM users
+WHERE email = @email
 "
-  use connection = connection connectionString
-  use command = command connection sql
+let authenticate (%s : %s) =
+  use cmd = new SqlCommandProvider<sql_authenticate, connectionString>(connectionString)
+  
   let user =
-    command
-    |> param "email" %s.Email
-    |> read toLogin
-    |> firstOrNone
+    cmd.Execute(%s.Email)
+    |> toLogin
+    |> Seq.tryHead
   match user with
     | None -> None
     | Some(user) ->
@@ -325,7 +326,7 @@ WHERE email = :email
       if verified
       then Some(user)
       else None
-  """ page.AsVal page.AsType site.AsDatabase page.AsVal page.AsVal
+  """ page.AsVal page.AsType  page.AsVal page.AsVal
 
 (*
 
@@ -356,3 +357,28 @@ let createQueries (site : Site) =
   site.Pages
   |> List.map (createQueriesForPage site)
   |> flatten
+
+let generated_data_access_template connectionString guts =
+  sprintf """module generated_data_access
+
+open generated_types
+open helper_general
+open helper_ado
+open FSharp.Data
+open dsl
+open BCrypt.Net
+
+type BCryptScheme =
+  {
+    Id : int
+    WorkFactor : int
+  }
+
+let bCryptSchemes : BCryptScheme list = [ { Id = 1; WorkFactor = 8; } ]
+let getBCryptScheme id = bCryptSchemes |> List.find (fun scheme -> scheme.Id = id)
+let currentBCryptScheme = 1
+
+[<Literal>]
+let connectionString = "%s"
+
+%s""" connectionString guts

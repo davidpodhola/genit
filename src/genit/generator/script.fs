@@ -5,42 +5,30 @@ open generator
 
 let someSite () =
 
-  site "Bob's Burgers"
+  site "Office Suppliers Details"
 
   basic home
 
-  basic registration
-
-  basic login
-
-  page "Order" CVELS
+  page "Group" CVELS
     [
       text      "Name"          Required
-      text      "Food"          Null
-      text      "Drinks"        Null
-      dollar    "Tip"           Null
-      paragraph "Notes"         Null
-      date      "Delivery Date" Required
-      phone     "Phone Number"  Required
-      text      "Address"       Null
-      text      "City"          Null
-      text      "State"         Null
-      text      "Zip"           Null
-      dropdown  "Free Soda"
-        [
-          "Cola"
-          "Orange"
-          "Root Beer"
-        ]
     ]
 
-  api "Order"
+  api "Group"
 
-  advancedPage "Reserveration" CVELS RequiresLogin
+  page "Supplier" CVELS
     [
       text  "Name"         Required
-      date  "Date"         Required
+      paragraph "Address"  Required
+      email  "Email"
       phone "Phone Number" Required
     ]
+
+  page "SupplierInGroup" CVELS
+    [
+      reference  "Group"    true
+      reference "Supplier"  true
+    ]
+
 
   currentSite

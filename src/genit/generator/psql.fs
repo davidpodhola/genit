@@ -40,6 +40,7 @@ let columnTypeTemplate field =
   | Password        -> "varchar(60)"
   | ConfirmPassword -> ""
   | Dropdown (_)    -> "smallint"
+  | Referenced      -> "integer"
 
 //http://www.postgresql.org/docs/9.5/static/ddl-constraints.html
 let columnAttributesTemplate (field : Field) =

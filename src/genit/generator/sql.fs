@@ -114,6 +114,7 @@ let conversionTemplate field =
   | Password        -> "getString"
   | ConfirmPassword -> ""
   | Dropdown (_)    -> "getInt16"
+  | Referenced      -> "getInt64"
 
 let dataReaderPropertyTemplate field =
  sprintf """%s = %s "%s" reader""" field.AsProperty (conversionTemplate field) field.AsDBColumn
@@ -326,26 +327,12 @@ Everything else
 
 *)
 
-let createQueriesForPage site page =
-  let rec createQueriesForPage pageMode =
-    match pageMode with
-    | CVELS     -> [Create; Edit; List; Search] |> List.map createQueriesForPage |> flatten
-    | CVEL      -> [Create; Edit; List] |> List.map createQueriesForPage |> flatten
-    | Create    -> insertTemplate site page
-    | Edit      -> [updateTemplate site page; tryByIdTemplate site page] |> flatten
-    | View      -> tryByIdTemplate site page
-    | List      -> selectManyTemplate site page
-    | Search    -> selectManyWhereTemplate site page
-    | Register  -> insertTemplate site page
-    | Login     -> authenticateTemplate site page
-    | Jumbotron -> ""
+let createQueriesForPage site (engine:Engine) page =
+  match engine with
+  | PostgreSQL -> psql.createQueriesForPage site page
+  | MicrosoftSQL -> mssql.createQueriesForPage site page
 
-  let queries = createQueriesForPage page.PageMode
-  if needsDataReader page
-  then sprintf "%s%s%s" (dataReaderTemplate page) System.Environment.NewLine queries
-  else queries
-
-let createQueries (site : Site) =
+let createQueries (site : Site) (engine:Engine) =
   site.Pages
-  |> List.map (createQueriesForPage site)
+  |> List.map (createQueriesForPage site engine)
   |> flatten

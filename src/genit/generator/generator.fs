@@ -39,6 +39,7 @@ let fieldToHtml (field : Field) =
   | Password          -> iconTemplate "icon_password_text" "lock"
   | ConfirmPassword   -> iconTemplate "icon_password_text" "lock"
   | Dropdown options  -> sprintf """label_select "%s" %A """ field.Name (zipOptions options) |> trimEnd
+  | Referenced        -> sprintf """label_select "%s" %s """ field.Name (sprintf "(zipOptions getMany_%s_Names)" (lower field.Name) ) |> trimEnd
 
 let fieldToPopulatedHtml page (field : Field) =
   let template tag = sprintf """%s "%s" %s.%s """ tag field.Name page.AsVal field.AsProperty |> trimEnd
@@ -56,6 +57,7 @@ let fieldToPopulatedHtml page (field : Field) =
   | Password          -> iconTemplate "icon_password_text" "lock"
   | ConfirmPassword   -> iconTemplate "icon_password_text" "lock"
   | Dropdown options  -> sprintf """label_select_selected "%s" %A (Some %s.%s)""" field.Name (zipOptions options) page.AsVal field.AsProperty
+  | Referenced -> sprintf """label_select_selected "%s" (zipOptions getMany_%s_Names) (Some %s.%s)""" field.Name (lower field.Name) page.AsVal field.AsProperty
 
 let fieldToStaticHtml page (field : Field) =
   let template tag = sprintf """%s "%s" %s.%s """ tag field.Name page.AsVal field.AsProperty
@@ -72,6 +74,7 @@ let fieldToStaticHtml page (field : Field) =
   | Password          -> template "label_static"
   | ConfirmPassword   -> template "label_static"
   | Dropdown _        -> sprintf """label_static "%s" %s.%s """ field.Name page.AsVal field.AsProperty
+  | Referenced        -> sprintf """label_static "%s" %s.%s """ field.Name page.AsVal field.AsProperty
 
 let fieldToErroredHtml page (field : Field) =
   let template tag = sprintf """%s "%s" (string %s.%s) errors""" tag field.Name page.AsFormVal field.AsProperty
@@ -89,6 +92,7 @@ let fieldToErroredHtml page (field : Field) =
   | Password          -> iconTemplate "errored_icon_password_text" "lock"
   | ConfirmPassword   -> iconTemplate "errored_icon_password_text" "lock"
   | Dropdown options  -> sprintf """errored_label_select "%s" %A (Some %s.%s) errors""" field.Name (zipOptions options) page.AsFormVal field.AsProperty
+  | Referenced  -> sprintf """errored_label_select "%s" %s (Some %s.%s) errors""" field.Name (sprintf "(zipOptions getMany_%s_Names)" (lower field.Name) ) page.AsFormVal field.AsProperty
 
 let fieldToProperty field =
   match field.FieldType with
@@ -113,6 +117,7 @@ let fieldToConvertProperty page field =
   let int64 () = sprintf """%s = int64 %s""" field.AsProperty property
   let double () = sprintf """%s = double %s""" field.AsProperty property
   let datetime () = sprintf """%s = System.DateTime.Parse(%s)""" field.AsProperty property
+  let referenced () = sprintf """%s = get_%sBySId(%s)""" field.AsProperty (lower field.AsProperty) property
   match field.FieldType with
   | Id              -> int64 ()
   | Text            -> string ()
@@ -126,6 +131,7 @@ let fieldToConvertProperty page field =
   | Password        -> string ()
   | ConfirmPassword -> string ()
   | Dropdown _      -> int16 ()
+  | Referenced      -> referenced ()
 
 let fieldToValidation (field : Field) page =
   let template validation = sprintf """%s "%s" %s.%s""" validation field.Name page.AsFormVal field.AsProperty
@@ -151,6 +157,7 @@ let fieldToValidation (field : Field) page =
   | Password        -> Some (template "validate_password")
   | ConfirmPassword -> confirmPasswordTemplate ()
   | Dropdown _      -> None
+  | Referenced      -> None
 
 let fieldToTestName (field : Field) =
   let template text = sprintf """"%s %s" """ field.Name text |> trimEnd
@@ -167,6 +174,7 @@ let fieldToTestName (field : Field) =
   | Password        -> Some (template "must be between 6 and 100 characters")
   | ConfirmPassword -> Some (template "must be between 6 and 100 characters")
   | Dropdown _      -> None
+  | Referenced      -> None
 
 let fieldToTestBody (field : Field) =
   let template text = sprintf """displayed "%s %s" """ field.Name text |> trimEnd
@@ -183,6 +191,7 @@ let fieldToTestBody (field : Field) =
   | Password        -> Some (template "must be between 6 and 100 characters")
   | ConfirmPassword -> Some (template "must be between 6 and 100 characters")
   | Dropdown _      -> None
+  | Referenced      -> None
 
 let attributeToValidation field page =
   let property = sprintf "%s.%s" page.AsFormVal field.AsProperty
@@ -193,6 +202,7 @@ let attributeToValidation field page =
   | Min(min)   -> Some (sprintf """validate_min "%s" %s %i""" field.Name property min)
   | Max(max)   -> Some (sprintf """validate_max "%s" %s %i""" field.Name property max)
   | Range(min,max) -> Some (sprintf """validate_range "%s" %s %i %i""" field.Name property min max)
+  | Reference(page,required) -> Some (sprintf """validate_reference "%s" "%s" %s %b""" page field.Name property required)
 
 let attributeToTestName (field : Field) =
   match field.Attribute with
@@ -202,6 +212,7 @@ let attributeToTestName (field : Field) =
   | Min(min)   -> Some (sprintf """"%s must be greater than %i" """ field.Name min |> trimEnd)
   | Max(max)   -> Some (sprintf """"%s must be less than %i" """ field.Name max |> trimEnd)
   | Range(min,max) -> Some (sprintf """"%s must be between %i and %i" """ field.Name min max |> trimEnd)
+  | Reference(page,required) -> None
 
 let attributeToTestBody (field : Field) =
   match field.Attribute with
@@ -211,6 +222,7 @@ let attributeToTestBody (field : Field) =
   | Min(min)   -> Some (sprintf """displayed "%s can not be below %i" """ field.Name min |> trimEnd)
   | Max(max)   -> Some (sprintf """displayed "%s can not be above %i" """ field.Name max |> trimEnd)
   | Range(min,max) -> Some (sprintf """displayed "%s must be between %i and %i" """ field.Name min max |> trimEnd)
+  | Reference(page,required) -> None
 
 let formatPopulatedEditFields page (fields : Field list) tabs =
   fields
@@ -690,10 +702,15 @@ let api_%s id =
          Writers.setMimeType "application/json"
          >=> OK (serializer.PickleToString(data)))""" api.AsVal api.AsVal
 
+let fieldLine (field : Field ) =
+  match field.Attribute with
+  | FieldAttribute.Reference( page, required ) -> sprintf """%s : %s""" field.AsProperty page
+  | _ -> sprintf """%s : %s""" field.AsProperty (fieldToProperty field)    
+
 let propertyTemplate (page : Page) =
   page.Fields
   |> List.filter (fun field -> field.FieldType <> ConfirmPassword)
-  |> List.map (fun field -> sprintf """%s : %s""" field.AsProperty (fieldToProperty field))
+  |> List.map (fun field -> fieldLine field)
   |> List.map (pad 2)
   |> flatten
 
@@ -924,6 +941,7 @@ let fakePropertyTemplate (field : Field) =
     | Password        -> """"123123" """ |> trimEnd
     | ConfirmPassword -> """"123123" """ |> trimEnd
     | Dropdown _      -> "1s"
+    | Referenced      -> "unbox null"
   sprintf """%s = %s """ field.AsProperty value
 
 let fakePropertiesTemplate (page : Page) =
@@ -1004,8 +1022,8 @@ let generate (site : Site) =
   let fake_data_results = site.Pages |> List.map fakeDataTemplate |> flatten
   let generated_fake_data_result = generated_fake_data_template fake_data_results
 
-  let connectionString = sprintf "Server=127.0.0.1;User Id=%s; Password=secure123;Database=%s;" site.AsDatabase site.AsDatabase
-  let generated_data_access_result = generated_data_access_template connectionString (sql.createQueries site)
+  let connectionString = sprintf @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=%s;Integrated Security=True" site.AsDatabase 
+  let generated_data_access_result = generated_data_access_template sql.Engine.MicrosoftSQL connectionString (sql.createQueries site sql.Engine.MicrosoftSQL)
 
   let serverKey = sprintf """let serverKey = %A""" (Suave.Utils.Crypto.generateKey Suave.Http.HttpRuntime.ServerKeyLength)
   let generated_security_result = generated_security_template serverKey
