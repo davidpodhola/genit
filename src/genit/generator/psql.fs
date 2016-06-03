@@ -455,11 +455,11 @@ let fakePropertyTemplate (field : Field) =
     | Referenced      -> "unbox null"
   sprintf """%s = %s """ field.AsProperty value
 
-let fieldToHtml (field : Field) =
-  let template tag = sprintf """%s "%s" "" """ tag field.Name |> trimEnd
-  let iconTemplate tag icon = sprintf """%s "%s" "" "%s" """ tag field.Name icon |> trimEnd
+let fieldToPopulatedHtml page (field : Field) =
+  let template tag = sprintf """%s "%s" %s.%s """ tag field.Name page.AsVal field.AsProperty |> trimEnd
+  let iconTemplate tag icon = sprintf """%s "%s" %s.%s "%s" """ tag field.Name page.AsVal field.AsProperty icon |> trimEnd
   match field.FieldType with
-  | Id                -> sprintf """hiddenInput "%s" "-1" """ field.AsProperty |> trimEnd
+  | Id                -> sprintf """hiddenInput "%s" %s.%s """ field.AsProperty page.AsVal field.AsProperty
   | Text              -> template "label_text"
   | Paragraph         -> template "label_textarea"
   | Number            -> template "label_text"
@@ -470,5 +470,5 @@ let fieldToHtml (field : Field) =
   | Name              -> iconTemplate "icon_label_text" "user"
   | Password          -> iconTemplate "icon_password_text" "lock"
   | ConfirmPassword   -> iconTemplate "icon_password_text" "lock"
-  | Dropdown options  -> sprintf """label_select "%s" %A """ field.Name (zipOptions options) |> trimEnd
-  | Referenced        -> sprintf """label_select "%s" %s """ field.Name (sprintf "(zipOptions getMany_%s_Names)" (lower field.Name) ) |> trimEnd
+  | Dropdown options  -> sprintf """label_select_selected "%s" %A (Some %s.%s)""" field.Name (zipOptions options) page.AsVal field.AsProperty
+  | Referenced -> sprintf """label_select_selected "%s" (zipOptions getMany_%s_Names) (Some %s.%s)""" field.Name (lower field.Name) page.AsVal field.AsProperty

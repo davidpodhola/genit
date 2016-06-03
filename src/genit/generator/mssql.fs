@@ -425,8 +425,12 @@ let fieldLine (field : Field ) =
   | FieldAttribute.Reference( page, required ) -> sprintf """%s : %s""" field.AsProperty page
   | _ -> sprintf """%s : %s""" field.AsProperty (fieldToProperty field)    
 
-let fieldToConvertProperty page field =
-  let property = sprintf "%s.%s" page.AsFormVal field.AsProperty
+let fieldToConvertProperty page (field:Field) =
+  let property = 
+    if field.Attribute = Null then
+      sprintf "Sone(%s.%s)" page.AsFormVal field.AsProperty
+    else
+      sprintf "%s.%s" page.AsFormVal field.AsProperty
   let string () = sprintf """%s = %s""" field.AsProperty property
   let int () = sprintf """%s = int %s""" field.AsProperty property
   let int16 () = sprintf """%s = int16 %s""" field.AsProperty property
@@ -434,25 +438,20 @@ let fieldToConvertProperty page field =
   let decimal () = sprintf """%s = decimal %s""" field.AsProperty property
   let datetime () = sprintf """%s = System.DateTime.Parse(%s)""" field.AsProperty property
   let referenced () = sprintf """%s = get_%sBySId(%s)""" field.AsProperty (lower field.AsProperty) property
-  let result = 
-    match field.FieldType with
-    | Id              -> int64 ()
-    | Text            -> string ()
-    | Paragraph       -> string ()
-    | Number          -> int ()
-    | Decimal         -> decimal ()
-    | Date            -> datetime ()
-    | Email           -> string ()
-    | Name            -> string ()
-    | Phone           -> string ()
-    | Password        -> string ()
-    | ConfirmPassword -> string ()
-    | Dropdown _      -> int16 ()
-    | Referenced      -> referenced ()
-  if field.Attribute = Null then
-    sprintf "Some(%s)" result
-  else
-    result
+  match field.FieldType with
+  | Id              -> int64 ()
+  | Text            -> string ()
+  | Paragraph       -> string ()
+  | Number          -> int ()
+  | Decimal         -> decimal ()
+  | Date            -> datetime ()
+  | Email           -> string ()
+  | Name            -> string ()
+  | Phone           -> string ()
+  | Password        -> string ()
+  | ConfirmPassword -> string ()
+  | Dropdown _      -> int16 ()
+  | Referenced      -> referenced ()
 
 let fakePropertyTemplate (field : Field) =
   let lowered = field.Name.ToLower()
@@ -504,15 +503,15 @@ let fakePropertyTemplate (field : Field) =
     sprintf """%s = %s """ field.AsProperty value
 
 
-let fieldToHtml (field : Field) =
+let fieldToPopulatedHtml page (field : Field) =
   let template tag = 
     if field.Attribute = Null then
-      sprintf """%s (option2Val "%s") "" """ tag field.Name |> trimEnd
-    else
-      sprintf """%s "%s" "" """ tag field.Name |> trimEnd
-  let iconTemplate tag icon = sprintf """%s "%s" "" "%s" """ tag field.Name icon |> trimEnd
+      sprintf """%s "%s" (option2Val %s.%s) """ tag field.Name page.AsVal field.AsProperty |> trimEnd
+    else 
+      sprintf """%s "%s" %s.%s """ tag field.Name page.AsVal field.AsProperty |> trimEnd
+  let iconTemplate tag icon = sprintf """%s "%s" %s.%s "%s" """ tag field.Name page.AsVal field.AsProperty icon |> trimEnd
   match field.FieldType with
-  | Id                -> sprintf """hiddenInput "%s" "-1" """ field.AsProperty |> trimEnd
+  | Id                -> sprintf """hiddenInput "%s" %s.%s """ field.AsProperty page.AsVal field.AsProperty
   | Text              -> template "label_text"
   | Paragraph         -> template "label_textarea"
   | Number            -> template "label_text"
@@ -523,5 +522,5 @@ let fieldToHtml (field : Field) =
   | Name              -> iconTemplate "icon_label_text" "user"
   | Password          -> iconTemplate "icon_password_text" "lock"
   | ConfirmPassword   -> iconTemplate "icon_password_text" "lock"
-  | Dropdown options  -> sprintf """label_select "%s" %A """ field.Name (zipOptions options) |> trimEnd
-  | Referenced        -> sprintf """label_select "%s" %s """ field.Name (sprintf "(zipOptions getMany_%s_Names)" (lower field.Name) ) |> trimEnd
+  | Dropdown options  -> sprintf """label_select_selected "%s" %A (Some %s.%s)""" field.Name (zipOptions options) page.AsVal field.AsProperty
+  | Referenced -> sprintf """label_select_selected "%s" (zipOptions getMany_%s_Names) (Some %s.%s)""" field.Name (lower field.Name) page.AsVal field.AsProperty

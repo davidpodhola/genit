@@ -353,8 +353,8 @@ let fakePropertyTemplate (field : Field) (engine:Engine) =
   | PostgreSQL -> psql.fakePropertyTemplate field
   | MicrosoftSQL -> mssql.fakePropertyTemplate field
 
-let fieldToHtml (field : Field) (engine:Engine) =
+let fieldToPopulatedHtml page (field : Field) (engine:Engine) =
   match engine with
-  | PostgreSQL -> psql.fieldToHtml field
-  | MicrosoftSQL -> mssql.fieldToHtml field
+  | PostgreSQL -> psql.fieldToPopulatedHtml page field
+  | MicrosoftSQL -> mssql.fieldToPopulatedHtml page field
 
