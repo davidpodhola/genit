@@ -65,17 +65,17 @@ let convert_orderForm (orderForm : OrderForm) : Order =
   {
     OrderID = int64 orderForm.OrderID
     Name = orderForm.Name
-    Food = orderForm.Food
-    Drinks = orderForm.Drinks
-    Tip = double orderForm.Tip
-    Notes = orderForm.Notes
+    Food = Some(orderForm.Food)
+    Drinks = Some(orderForm.Drinks)
+    Tip = Some(decimal orderForm.Tip)
+    Notes = Some(orderForm.Notes)
     DeliveryDate = System.DateTime.Parse(orderForm.DeliveryDate)
     PhoneNumber = orderForm.PhoneNumber
-    Address = orderForm.Address
-    City = orderForm.City
-    State = orderForm.State
-    Zip = orderForm.Zip
-    FreeSoda = int16 orderForm.FreeSoda
+    Address = Some(orderForm.Address)
+    City = Some(orderForm.City)
+    State = Some(orderForm.State)
+    Zip = Some(orderForm.Zip)
+    FreeSoda = Some(int16 orderForm.FreeSoda)
   }
   
 type ReserverationForm =

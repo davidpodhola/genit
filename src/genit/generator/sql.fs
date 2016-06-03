@@ -347,3 +347,8 @@ let fieldToConvertProperty page field (engine:Engine) =
   match engine with
   | PostgreSQL -> psql.fieldLine field
   | MicrosoftSQL -> mssql.fieldLine field
+
+let fakePropertyTemplate (field : Field) (engine:Engine) =
+  match engine with
+  | PostgreSQL -> psql.fakePropertyTemplate field
+  | MicrosoftSQL -> mssql.fakePropertyTemplate field

@@ -9,17 +9,17 @@ let fake_order () =
   {
     OrderID = -1L 
     Name = (randomItem firstNames) + " " + (randomItem lastNames) 
-    Food = randomItems 6 words 
-    Drinks = randomItems 6 words 
-    Tip = random.Next(100) |> double 
-    Notes = randomItems 40 words 
+    Food = Some(randomItems 6 words )
+    Drinks = Some(randomItems 6 words )
+    Tip = Some(random.Next(100) |> decimal )
+    Notes = Some(randomItems 40 words )
     DeliveryDate = System.DateTime.Now 
     PhoneNumber = sprintf "%i-%i-%i" (random.Next(200,800)) (random.Next(200,800)) (random.Next(2000,8000)) 
-    Address = (string (random.Next(100,9999))) + " " + (randomItem streetNames) + " " + (randomItem streetNameSuffixes) 
-    City = cityStateZip.City 
-    State = cityStateZip.State 
-    Zip = cityStateZip.Zip 
-    FreeSoda = 1s 
+    Address = Some((string (random.Next(100,9999))) + " " + (randomItem streetNames) + " " + (randomItem streetNameSuffixes)) 
+    City = Some(cityStateZip.City )
+    State = Some(cityStateZip.State )
+    Zip = Some(cityStateZip.Zip )
+    FreeSoda = Some(1s )
   }
 
 let fake_many_order number =

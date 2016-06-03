@@ -408,3 +408,49 @@ let fieldToConvertProperty page field =
   | ConfirmPassword -> string ()
   | Dropdown _      -> int16 ()
   | Referenced      -> referenced ()
+
+let fakePropertyTemplate (field : Field) =
+  let lowered = field.Name.ToLower()
+  let pickAppropriateText defaultValue =
+    if lowered.Contains("last") && lowered.Contains("name")
+    then "randomItem lastNames"
+    else if lowered.Contains("first") && lowered.Contains("name")
+    then "randomItem firstNames"
+    else if lowered.Contains("name")
+    then """(randomItem firstNames) + " " + (randomItem lastNames)"""
+    else if lowered.Contains("city")
+    then "cityStateZip.City"
+    else if lowered.Contains("state")
+    then "cityStateZip.State"
+    else if lowered.Contains("zip") || lowered.Contains("postal")
+    then "cityStateZip.Zip"
+    else if lowered.Contains("address") || lowered.Contains("street")
+    then """(string (random.Next(100,9999))) + " " + (randomItem streetNames) + " " + (randomItem streetNameSuffixes)"""
+    else defaultValue
+
+  let pickAppropriateNumber defaultValue =
+    defaultValue
+
+  let pickAppropriateName defaultValue =
+    if lowered.Contains("first")
+    then "randomItem firstNames"
+    else if lowered.Contains("last")
+    then "randomItem lastNames"
+    else defaultValue
+
+  let value =
+    match field.FieldType with
+    | Id              -> "-1L"
+    | Text            -> pickAppropriateText "randomItems 6 words"
+    | Paragraph       -> "randomItems 40 words"
+    | Number          -> pickAppropriateNumber "random.Next(100)"
+    | Decimal         -> "random.Next(100) |> double"
+    | Date            -> "System.DateTime.Now"
+    | Phone           -> """sprintf "%i-%i-%i" (random.Next(200,800)) (random.Next(200,800)) (random.Next(2000,8000))"""
+    | Email           -> """sprintf "%s@%s.com" (randomItem words) (randomItem words)"""
+    | Name            -> pickAppropriateName """randomItem names"""
+    | Password        -> """"123123" """ |> trimEnd
+    | ConfirmPassword -> """"123123" """ |> trimEnd
+    | Dropdown _      -> "1s"
+    | Referenced      -> "unbox null"
+  sprintf """%s = %s """ field.AsProperty value

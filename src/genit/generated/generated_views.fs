@@ -8,6 +8,7 @@ open generated_forms
 open generated_data_access
 open generated_types
 open generator
+open helper_general
 
 let brand = "Bob's Burgers"
 
@@ -185,7 +186,7 @@ let view_edit_order (order : Order) =
           label_text "Food" order.Food
           label_text "Drinks" order.Drinks
           label_text "Tip" order.Tip
-          label_textarea "Notes" order.Notes
+          label_textarea "Notes" (option2Val order.Notes)
           label_datetime "Delivery Date" order.DeliveryDate
           label_text "Phone Number" order.PhoneNumber
           label_text "Address" order.Address
