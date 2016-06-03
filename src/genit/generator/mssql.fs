@@ -191,7 +191,10 @@ let insertParamTemplate page field =
   then sprintf """password""" 
   else if field.FieldType = Referenced 
   then sprintf """int %s.%s.%sID""" page.AsVal field.AsProperty field.AsProperty
-  else sprintf """%s.%s""" page.AsVal field.AsProperty
+  else if field.Attribute = Null then
+    sprintf """option2Val %s.%s""" page.AsVal field.AsProperty
+  else
+    sprintf """%s.%s""" page.AsVal field.AsProperty
 
 let insertParamsTemplate page =
   page.Fields
@@ -238,7 +241,11 @@ let updateParamsTemplate page =
   |> List.map (fun field -> 
     if field.FieldType = Referenced 
       then sprintf """int %s.%s.%sID""" page.AsVal field.AsProperty field.AsProperty
-      else sprintf """%s.%s""" page.AsVal field.AsProperty
+      else 
+        if field.Attribute = Null then
+          sprintf """option2Val %s.%s""" page.AsVal field.AsProperty
+        else
+          sprintf """%s.%s""" page.AsVal field.AsProperty
   )
   |> List.map (pad 1)
   |> flattenWith ","

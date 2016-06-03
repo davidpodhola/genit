@@ -106,3 +106,8 @@ type Bundle<'a, 'b> =
     href_view : PrintfFormat<(int64 -> string),unit,string,string,int64>
     href_edit : PrintfFormat<(int64 -> string),unit,string,string,int64>
   }
+
+let option2Val (p:'a option) :'a =
+  match p with
+  | Some(s) -> s
+  | None -> Unchecked.defaultof<'a>

@@ -154,17 +154,17 @@ let insert_order (order : Order) =
   
   use command = new SqlCommandProvider<sql_insert_order, connectionString>(connectionString)
   command.Execute(  order.Name,
-  order.Food,
-  order.Drinks,
-  order.Tip,
-  order.Notes,
+  option2Val order.Food,
+  option2Val order.Drinks,
+  option2Val order.Tip,
+  option2Val order.Notes,
   order.DeliveryDate,
   order.PhoneNumber,
-  order.Address,
-  order.City,
-  order.State,
-  order.Zip,
-  order.FreeSoda) |> Seq.head |> Option.get |> int64
+  option2Val order.Address,
+  option2Val order.City,
+  option2Val order.State,
+  option2Val order.Zip,
+  option2Val order.FreeSoda) |> Seq.head |> Option.get |> int64
     
 
 [<Literal>]
@@ -190,17 +190,17 @@ let update_order (order : Order) =
     use command = new SqlCommandProvider<sql_update_order, connectionString>(connectionString)
     command.Execute(int   order.OrderID,
   order.Name,
-  order.Food,
-  order.Drinks,
-  order.Tip,
-  order.Notes,
+  option2Val order.Food,
+  option2Val order.Drinks,
+  option2Val order.Tip,
+  option2Val order.Notes,
   order.DeliveryDate,
   order.PhoneNumber,
-  order.Address,
-  order.City,
-  order.State,
-  order.Zip,
-  order.FreeSoda) |> ignore
+  option2Val order.Address,
+  option2Val order.City,
+  option2Val order.State,
+  option2Val order.Zip,
+  option2Val order.FreeSoda) |> ignore
     
 
 
