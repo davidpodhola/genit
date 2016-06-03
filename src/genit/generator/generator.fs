@@ -94,21 +94,6 @@ let fieldToErroredHtml page (field : Field) =
   | Dropdown options  -> sprintf """errored_label_select "%s" %A (Some %s.%s) errors""" field.Name (zipOptions options) page.AsFormVal field.AsProperty
   | Referenced  -> sprintf """errored_label_select "%s" %s (Some %s.%s) errors""" field.Name (sprintf "(zipOptions getMany_%s_Names)" (lower field.Name) ) page.AsFormVal field.AsProperty
 
-let fieldToProperty field =
-  match field.FieldType with
-  | Id              -> "int64"
-  | Text            -> "string"
-  | Paragraph       -> "string"
-  | Number          -> "int"
-  | Decimal         -> "double"
-  | Date            -> "System.DateTime"
-  | Phone           -> "string"
-  | Email           -> "string"
-  | Name            -> "string"
-  | Password        -> "string"
-  | ConfirmPassword -> "string"
-  | Dropdown _      -> "int16"
-
 let fieldToConvertProperty page field =
   let property = sprintf "%s.%s" page.AsFormVal field.AsProperty
   let string () = sprintf """%s = %s""" field.AsProperty property
@@ -703,9 +688,7 @@ let api_%s id =
          >=> OK (serializer.PickleToString(data)))""" api.AsVal api.AsVal
 
 let fieldLine (field : Field ) =
-  match field.Attribute with
-  | FieldAttribute.Reference( page, required ) -> sprintf """%s : %s""" field.AsProperty page
-  | _ -> sprintf """%s : %s""" field.AsProperty (fieldToProperty field)    
+  sql.fieldLine field (sql.Engine.MicrosoftSQL)
 
 let propertyTemplate (page : Page) =
   page.Fields

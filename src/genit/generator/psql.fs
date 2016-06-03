@@ -363,3 +363,24 @@ let createQueries (site : Site) =
   site.Pages
   |> List.map (createQueriesForPage site)
   |> flatten
+
+let fieldToProperty field =
+  match field.FieldType with
+  | Id              -> "int64"
+  | Text            -> "string"
+  | Paragraph       -> "string"
+  | Number          -> "int"
+  | Decimal         -> "double"
+  | Date            -> "System.DateTime"
+  | Phone           -> "string"
+  | Email           -> "string"
+  | Name            -> "string"
+  | Password        -> "string"
+  | ConfirmPassword -> "string"
+  | Dropdown _      -> "int16"
+
+
+let fieldLine (field : Field ) =
+  match field.Attribute with
+  | FieldAttribute.Reference( page, required ) -> sprintf """%s : %s""" field.AsProperty page
+  | _ -> sprintf """%s : %s""" field.AsProperty (fieldToProperty field)    

@@ -336,3 +336,9 @@ let createQueries (site : Site) (engine:Engine) =
   site.Pages
   |> List.map (createQueriesForPage site engine)
   |> flatten
+
+let fieldLine (field : Field ) (engine:Engine) =
+  match engine with
+  | PostgreSQL -> psql.fieldLine field
+  | MicrosoftSQL -> mssql.fieldLine field
+

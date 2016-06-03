@@ -142,7 +142,7 @@ let dataReaderTemplate page =
     sprintf """
 [<Literal>]
 let {0}QuerySQL = "DECLARE @id int = @p0; SELECT TOP 500 * FROM %s WHERE %s=(CASE WHEN @id=0 THEN %s ELSE @id END )"
-type {0}Query = SqlCommandProvider< {0}QuerySQL, connectionString>
+type {0}Query = SqlCommandProvider<{0}QuerySQL, connectionString>
   
 let to{0} (a:{0}Query.Record seq )  : %s list =
   a |> Seq.map( fun record -> 
@@ -188,7 +188,7 @@ let insertValues page =
 
 let insertParamTemplate page field =
   if field.FieldType = Password
-  then sprintf """%s password""" field.AsDBColumn
+  then sprintf """password""" 
   else if field.FieldType = Referenced 
   then sprintf """int %s.%s.%sID""" page.AsVal field.AsProperty field.AsProperty
   else sprintf """%s.%s""" page.AsVal field.AsProperty
@@ -215,8 +215,8 @@ INSERT INTO %s
   "
 let insert_{0} ({0} : %s) =
   %s
-    use command = new SqlCommandProvider<sql_insert_{0}, connectionString>(connectionString)
-    command.Execute(%s) |> Seq.head |> Option.get |> int64
+  use command = new SqlCommandProvider<sql_insert_{0}, connectionString>(connectionString)
+  command.Execute(%s) |> Seq.head |> Option.get |> int64
     """ page.AsTable (insertColumns page) (insertValues page) page.AsType  (passwordTemplate page) (insertParamsTemplate page), page.AsVal )
 
 (*
@@ -312,8 +312,17 @@ let sql_authenticate = "
 SELECT * FROM users
 WHERE email = @email
 "
+type authenticateQuery = SqlCommandProvider<sql_authenticate, connectionString>
+let toLogin (a:authenticateQuery.Record seq )  : Login list =
+  a |> Seq.map( fun record -> 
+  { 
+          UserID = int64 record.user_id;
+      Email =  record.email;
+      Password =  record.password;
+  } ) 
+  |> Seq.toList
 let authenticate (%s : %s) =
-  use cmd = new SqlCommandProvider<sql_authenticate, connectionString>(connectionString)
+  use cmd = new authenticateQuery(connectionString)
   
   let user =
     cmd.Execute(%s.Email)
@@ -382,3 +391,29 @@ let currentBCryptScheme = 1
 let connectionString = "%s"
 
 %s""" connectionString guts
+
+let fieldToProperty field =
+  let result = 
+    match field.FieldType with
+    | Id              -> "int64"
+    | Text            -> "string"
+    | Paragraph       -> "string"
+    | Number          -> "int"
+    | Decimal         -> "double"
+    | Date            -> "System.DateTime"
+    | Phone           -> "string"
+    | Email           -> "string"
+    | Name            -> "string"
+    | Password        -> "string"
+    | ConfirmPassword -> "string"
+    | Dropdown _      -> "int16"
+  if field.Attribute = Null then
+    result + " option"
+  else
+    result
+
+
+let fieldLine (field : Field ) =
+  match field.Attribute with
+  | FieldAttribute.Reference( page, required ) -> sprintf """%s : %s""" field.AsProperty page
+  | _ -> sprintf """%s : %s""" field.AsProperty (fieldToProperty field)    
