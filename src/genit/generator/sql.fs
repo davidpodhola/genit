@@ -342,3 +342,8 @@ let fieldLine (field : Field ) (engine:Engine) =
   | PostgreSQL -> psql.fieldLine field
   | MicrosoftSQL -> mssql.fieldLine field
 
+
+let fieldToConvertProperty page field (engine:Engine) =
+  match engine with
+  | PostgreSQL -> psql.fieldLine field
+  | MicrosoftSQL -> mssql.fieldLine field

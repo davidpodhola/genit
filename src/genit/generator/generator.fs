@@ -95,28 +95,7 @@ let fieldToErroredHtml page (field : Field) =
   | Referenced  -> sprintf """errored_label_select "%s" %s (Some %s.%s) errors""" field.Name (sprintf "(zipOptions getMany_%s_Names)" (lower field.Name) ) page.AsFormVal field.AsProperty
 
 let fieldToConvertProperty page field =
-  let property = sprintf "%s.%s" page.AsFormVal field.AsProperty
-  let string () = sprintf """%s = %s""" field.AsProperty property
-  let int () = sprintf """%s = int %s""" field.AsProperty property
-  let int16 () = sprintf """%s = int16 %s""" field.AsProperty property
-  let int64 () = sprintf """%s = int64 %s""" field.AsProperty property
-  let double () = sprintf """%s = double %s""" field.AsProperty property
-  let datetime () = sprintf """%s = System.DateTime.Parse(%s)""" field.AsProperty property
-  let referenced () = sprintf """%s = get_%sBySId(%s)""" field.AsProperty (lower field.AsProperty) property
-  match field.FieldType with
-  | Id              -> int64 ()
-  | Text            -> string ()
-  | Paragraph       -> string ()
-  | Number          -> int ()
-  | Decimal         -> double ()
-  | Date            -> datetime ()
-  | Email           -> string ()
-  | Name            -> string ()
-  | Phone           -> string ()
-  | Password        -> string ()
-  | ConfirmPassword -> string ()
-  | Dropdown _      -> int16 ()
-  | Referenced      -> referenced ()
+  sql.fieldToConvertProperty page field (sql.Engine.MicrosoftSQL)
 
 let fieldToValidation (field : Field) page =
   let template validation = sprintf """%s "%s" %s.%s""" validation field.Name page.AsFormVal field.AsProperty

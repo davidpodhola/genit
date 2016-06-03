@@ -20,17 +20,17 @@ type Order =
   {
     OrderID : int64
     Name : string
-    Food : string
-    Drinks : string
-    Tip : double
-    Notes : string
+    Food : string option
+    Drinks : string option
+    Tip : decimal option
+    Notes : string option
     DeliveryDate : System.DateTime
     PhoneNumber : string
-    Address : string
-    City : string
-    State : string
-    Zip : string
-    FreeSoda : int16
+    Address : string option
+    City : string option
+    State : string option
+    Zip : string option
+    FreeSoda : int16 option
   }
   
 type Reserveration =
