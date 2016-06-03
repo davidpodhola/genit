@@ -345,10 +345,16 @@ let fieldLine (field : Field ) (engine:Engine) =
 
 let fieldToConvertProperty page field (engine:Engine) =
   match engine with
-  | PostgreSQL -> psql.fieldLine field
-  | MicrosoftSQL -> mssql.fieldLine field
+  | PostgreSQL -> psql.fieldToConvertProperty page field
+  | MicrosoftSQL -> mssql.fieldToConvertProperty page field
 
 let fakePropertyTemplate (field : Field) (engine:Engine) =
   match engine with
   | PostgreSQL -> psql.fakePropertyTemplate field
   | MicrosoftSQL -> mssql.fakePropertyTemplate field
+
+let fieldToHtml (field : Field) (engine:Engine) =
+  match engine with
+  | PostgreSQL -> psql.fieldToHtml field
+  | MicrosoftSQL -> mssql.fieldToHtml field
+

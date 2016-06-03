@@ -15,31 +15,8 @@ let destination filename =
   |> (fun path -> path.Replace("bin", "generated"))
   |> (fun path -> System.IO.Path.Combine(path, filename))
 
-let zipOptions (options : string list) =
-  //clean out empty strings, append one at the end
-  let options = options |> List.filter (fun str -> str <> "")
-  let results =
-    List.zip [ 1 .. options.Length ] options
-    |> List.map (fun (i, s) -> string i, s)
-  ["0", ""] @ results
-
 let fieldToHtml (field : Field) =
-  let template tag = sprintf """%s "%s" "" """ tag field.Name |> trimEnd
-  let iconTemplate tag icon = sprintf """%s "%s" "" "%s" """ tag field.Name icon |> trimEnd
-  match field.FieldType with
-  | Id                -> sprintf """hiddenInput "%s" "-1" """ field.AsProperty |> trimEnd
-  | Text              -> template "label_text"
-  | Paragraph         -> template "label_textarea"
-  | Number            -> template "label_text"
-  | Decimal           -> template "label_text"
-  | Date              -> template "label_datetime"
-  | Phone             -> template "label_text"
-  | Email             -> iconTemplate "icon_label_text" "envelope"
-  | Name              -> iconTemplate "icon_label_text" "user"
-  | Password          -> iconTemplate "icon_password_text" "lock"
-  | ConfirmPassword   -> iconTemplate "icon_password_text" "lock"
-  | Dropdown options  -> sprintf """label_select "%s" %A """ field.Name (zipOptions options) |> trimEnd
-  | Referenced        -> sprintf """label_select "%s" %s """ field.Name (sprintf "(zipOptions getMany_%s_Names)" (lower field.Name) ) |> trimEnd
+  sql.fieldToHtml field (sql.Engine.MicrosoftSQL)
 
 let fieldToPopulatedHtml page (field : Field) =
   let template tag = sprintf """%s "%s" %s.%s """ tag field.Name page.AsVal field.AsProperty |> trimEnd

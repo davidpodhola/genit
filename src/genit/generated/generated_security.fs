@@ -1,6 +1,6 @@
 module generated_security
 
-let serverKey = [|203uy; 79uy; 101uy; 93uy; 178uy; 95uy; 56uy; 46uy; 176uy; 4uy; 20uy; 29uy;
-  57uy; 105uy; 110uy; 221uy; 11uy; 111uy; 87uy; 36uy; 26uy; 51uy; 125uy; 6uy;
-  70uy; 21uy; 70uy; 89uy; 173uy; 244uy; 194uy; 197uy|]
+let serverKey = [|118uy; 15uy; 160uy; 152uy; 18uy; 212uy; 22uy; 94uy; 253uy; 149uy; 203uy; 253uy;
+  178uy; 226uy; 82uy; 32uy; 16uy; 191uy; 78uy; 55uy; 145uy; 240uy; 14uy; 10uy;
+  227uy; 140uy; 211uy; 188uy; 200uy; 244uy; 81uy; 238uy|]
   

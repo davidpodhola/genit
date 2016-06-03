@@ -454,3 +454,21 @@ let fakePropertyTemplate (field : Field) =
     | Dropdown _      -> "1s"
     | Referenced      -> "unbox null"
   sprintf """%s = %s """ field.AsProperty value
+
+let fieldToHtml (field : Field) =
+  let template tag = sprintf """%s "%s" "" """ tag field.Name |> trimEnd
+  let iconTemplate tag icon = sprintf """%s "%s" "" "%s" """ tag field.Name icon |> trimEnd
+  match field.FieldType with
+  | Id                -> sprintf """hiddenInput "%s" "-1" """ field.AsProperty |> trimEnd
+  | Text              -> template "label_text"
+  | Paragraph         -> template "label_textarea"
+  | Number            -> template "label_text"
+  | Decimal           -> template "label_text"
+  | Date              -> template "label_datetime"
+  | Phone             -> template "label_text"
+  | Email             -> iconTemplate "icon_label_text" "envelope"
+  | Name              -> iconTemplate "icon_label_text" "user"
+  | Password          -> iconTemplate "icon_password_text" "lock"
+  | ConfirmPassword   -> iconTemplate "icon_password_text" "lock"
+  | Dropdown options  -> sprintf """label_select "%s" %A """ field.Name (zipOptions options) |> trimEnd
+  | Referenced        -> sprintf """label_select "%s" %s """ field.Name (sprintf "(zipOptions getMany_%s_Names)" (lower field.Name) ) |> trimEnd

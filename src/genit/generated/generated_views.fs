@@ -183,9 +183,9 @@ let view_edit_order (order : Order) =
         [
           hiddenInput "OrderID" order.OrderID 
           label_text "Name" order.Name
-          label_text "Food" order.Food
-          label_text "Drinks" order.Drinks
-          label_text "Tip" order.Tip
+          label_text "Food" (option2Val order.Food)
+          label_text "Drinks" (option2Val order.Drinks )
+          label_text "Tip" (option2Val order.Tip)
           label_textarea "Notes" (option2Val order.Notes)
           label_datetime "Delivery Date" order.DeliveryDate
           label_text "Phone Number" order.PhoneNumber

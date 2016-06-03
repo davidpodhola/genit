@@ -150,7 +150,7 @@ let to{0} (a:{0}Query.Record seq )  : %s list =
     %s
   }} ) 
   |> Seq.toList
-    """ page.AsTable idField.AsDBColumn idField.AsDBColumn page.AsType (dataReaderPropertiesTemplate page), page.AsVal)
+    """ (if page.AsVal="login" then "users" else page.AsTable) idField.AsDBColumn idField.AsDBColumn page.AsType (dataReaderPropertiesTemplate page), page.AsVal)
 
 (*
 
@@ -406,7 +406,7 @@ let fieldToProperty field =
     | Text            -> "string"
     | Paragraph       -> "string"
     | Number          -> "int"
-    | Decimal         -> "double"
+    | Decimal         -> "decimal"
     | Date            -> "System.DateTime"
     | Phone           -> "string"
     | Email           -> "string"
@@ -497,3 +497,26 @@ let fakePropertyTemplate (field : Field) =
     sprintf """%s = Some(%s) """ field.AsProperty value
   else
     sprintf """%s = %s """ field.AsProperty value
+
+
+let fieldToHtml (field : Field) =
+  let template tag = 
+    if field.Attribute = Null then
+      sprintf """%s (option2Val "%s") "" """ tag field.Name |> trimEnd
+    else
+      sprintf """%s "%s" "" """ tag field.Name |> trimEnd
+  let iconTemplate tag icon = sprintf """%s "%s" "" "%s" """ tag field.Name icon |> trimEnd
+  match field.FieldType with
+  | Id                -> sprintf """hiddenInput "%s" "-1" """ field.AsProperty |> trimEnd
+  | Text              -> template "label_text"
+  | Paragraph         -> template "label_textarea"
+  | Number            -> template "label_text"
+  | Decimal           -> template "label_text"
+  | Date              -> template "label_datetime"
+  | Phone             -> template "label_text"
+  | Email             -> iconTemplate "icon_label_text" "envelope"
+  | Name              -> iconTemplate "icon_label_text" "user"
+  | Password          -> iconTemplate "icon_password_text" "lock"
+  | ConfirmPassword   -> iconTemplate "icon_password_text" "lock"
+  | Dropdown options  -> sprintf """label_select "%s" %A """ field.Name (zipOptions options) |> trimEnd
+  | Referenced        -> sprintf """label_select "%s" %s """ field.Name (sprintf "(zipOptions getMany_%s_Names)" (lower field.Name) ) |> trimEnd
