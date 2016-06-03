@@ -184,15 +184,15 @@ let view_edit_order (order : Order) =
           hiddenInput "OrderID" order.OrderID 
           label_text "Name" order.Name
           label_text "Food" (option2Val order.Food)
-          label_text "Drinks" (option2Val order.Drinks )
+          label_text "Drinks" (option2Val order.Drinks)
           label_text "Tip" (option2Val order.Tip)
           label_textarea "Notes" (option2Val order.Notes)
           label_datetime "Delivery Date" order.DeliveryDate
           label_text "Phone Number" order.PhoneNumber
-          label_text "Address" order.Address
-          label_text "City" order.City
-          label_text "State" order.State
-          label_text "Zip" order.Zip
+          label_text "Address" (option2Val order.Address)
+          label_text "City" (option2Val order.City)
+          label_text "State" (option2Val order.State)
+          label_text "Zip" (option2Val order.Zip)
           label_select_selected "Free Soda" [("0", ""); ("1", "Cola"); ("2", "Orange"); ("3", "Root Beer")] (Some order.FreeSoda)
         ]
     ]
