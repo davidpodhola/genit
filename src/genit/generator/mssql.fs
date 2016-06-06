@@ -426,18 +426,39 @@ let fieldLine (field : Field ) =
   | _ -> sprintf """%s : %s""" field.AsProperty (fieldToProperty field)    
 
 let fieldToConvertProperty page (field:Field) =
-  let property = 
+  let property = sprintf "%s.%s" page.AsFormVal field.AsProperty
+  let string () = 
     if field.Attribute=Null then
-      sprintf "Some(%s.%s)" page.AsFormVal field.AsProperty
+      sprintf """%s = Some(%s)""" field.AsProperty property
     else
-      sprintf "%s.%s" page.AsFormVal field.AsProperty
-  let string () = sprintf """%s = %s""" field.AsProperty property
-  let int () = sprintf """%s = int %s""" field.AsProperty property
-  let int16 () = sprintf """%s = int16 %s""" field.AsProperty property
-  let int64 () = sprintf """%s = int64 %s""" field.AsProperty property
-  let decimal () = sprintf """%s = decimal %s""" field.AsProperty property
-  let datetime () = sprintf """%s = System.DateTime.Parse(%s)""" field.AsProperty property
-  let referenced () = sprintf """%s = get_%sBySId(%s)""" field.AsProperty (lower field.AsProperty) property
+      sprintf """%s = %s""" field.AsProperty property
+  let int () = 
+    if field.Attribute=Null then
+      sprintf """%s = Some(int %s)""" field.AsProperty property
+    else
+      sprintf """%s = int %s""" field.AsProperty property
+  let int16 () = 
+    if field.Attribute=Null then
+       sprintf """%s = Some(int16 %s)""" field.AsProperty property
+    else
+       sprintf """%s = int16 %s""" field.AsProperty property
+  let int64 () = 
+    if field.Attribute=Null then
+      sprintf """%s = Some(int64 %s)""" field.AsProperty property
+    else
+      sprintf """%s = int64 %s""" field.AsProperty property
+  let decimal () = 
+    if field.Attribute=Null then
+      sprintf """%s = Some(decimal %s)""" field.AsProperty property
+    else
+      sprintf """%s = decimal %s""" field.AsProperty property
+  let datetime () = 
+    if field.Attribute=Null then
+      sprintf """%s = Some(System.DateTime.Parse(%s))""" field.AsProperty property
+    else
+      sprintf """%s = System.DateTime.Parse(%s)""" field.AsProperty property
+  let referenced () = 
+      sprintf """%s = get_%sBySId(%s)""" field.AsProperty (lower field.AsProperty) property
   match field.FieldType with
   | Id              -> int64 ()
   | Text            -> string ()

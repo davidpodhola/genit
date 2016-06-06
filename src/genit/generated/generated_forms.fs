@@ -67,7 +67,7 @@ let convert_orderForm (orderForm : OrderForm) : Order =
     Name = orderForm.Name
     Food = Some(orderForm.Food)
     Drinks = Some(orderForm.Drinks)
-    Tip = decimal Some(orderForm.Tip)
+    Tip = Some(decimal orderForm.Tip)
     Notes = Some(orderForm.Notes)
     DeliveryDate = System.DateTime.Parse(orderForm.DeliveryDate)
     PhoneNumber = orderForm.PhoneNumber
@@ -75,7 +75,7 @@ let convert_orderForm (orderForm : OrderForm) : Order =
     City = Some(orderForm.City)
     State = Some(orderForm.State)
     Zip = Some(orderForm.Zip)
-    FreeSoda = int16 Some(orderForm.FreeSoda)
+    FreeSoda = Some(int16 orderForm.FreeSoda)
   }
   
 type ReserverationForm =
