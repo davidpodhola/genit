@@ -426,7 +426,11 @@ let fieldLine (field : Field ) =
   | _ -> sprintf """%s : %s""" field.AsProperty (fieldToProperty field)    
 
 let fieldToConvertProperty page (field:Field) =
-  let property = sprintf "%s.%s" page.AsFormVal field.AsProperty
+  let property = 
+    if field.Attribute=Null then
+      sprintf "Some(%s.%s)" page.AsFormVal field.AsProperty
+    else
+      sprintf "%s.%s" page.AsFormVal field.AsProperty
   let string () = sprintf """%s = %s""" field.AsProperty property
   let int () = sprintf """%s = int %s""" field.AsProperty property
   let int16 () = sprintf """%s = int16 %s""" field.AsProperty property
@@ -434,25 +438,21 @@ let fieldToConvertProperty page (field:Field) =
   let decimal () = sprintf """%s = decimal %s""" field.AsProperty property
   let datetime () = sprintf """%s = System.DateTime.Parse(%s)""" field.AsProperty property
   let referenced () = sprintf """%s = get_%sBySId(%s)""" field.AsProperty (lower field.AsProperty) property
-  let result = 
-    match field.FieldType with
-    | Id              -> int64 ()
-    | Text            -> string ()
-    | Paragraph       -> string ()
-    | Number          -> int ()
-    | Decimal         -> decimal ()
-    | Date            -> datetime ()
-    | Email           -> string ()
-    | Name            -> string ()
-    | Phone           -> string ()
-    | Password        -> string ()
-    | ConfirmPassword -> string ()
-    | Dropdown _      -> int16 ()
-    | Referenced      -> referenced ()
-  if field.Attribute=Null then
-    sprintf "Some(%s)" result
-  else
-    result
+  match field.FieldType with
+  | Id              -> int64 ()
+  | Text            -> string ()
+  | Paragraph       -> string ()
+  | Number          -> int ()
+  | Decimal         -> decimal ()
+  | Date            -> datetime ()
+  | Email           -> string ()
+  | Name            -> string ()
+  | Phone           -> string ()
+  | Password        -> string ()
+  | ConfirmPassword -> string ()
+  | Dropdown _      -> int16 ()
+  | Referenced      -> referenced ()
+
 
 let fakePropertyTemplate (field : Field) =
   let lowered = field.Name.ToLower()
